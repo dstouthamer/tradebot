@@ -20,7 +20,17 @@ Bestel ook (of wijs) een **domein** en zet een **A-record** naar het IP van je V
 
 ## Optie A — Docker (aanbevolen, met automatische HTTPS)
 
-Op een verse Ubuntu-VPS:
+**Snelste weg (één commando):** op een verse Ubuntu/Debian-VPS, na het clonen:
+
+```bash
+git clone https://github.com/dstouthamer/tradebot.git && cd tradebot
+bash deploy/bootstrap.sh boekhouder.jouwdomein.nl
+```
+
+Het script installeert Docker, genereert een veilige `SECRET_KEY`, zet je domein en
+start de stack met gratis HTTPS. Daarna staat de app op `https://boekhouder.jouwdomein.nl/`.
+
+Liever stap voor stap? Op een verse Ubuntu-VPS:
 
 ```bash
 # 1) Docker installeren
