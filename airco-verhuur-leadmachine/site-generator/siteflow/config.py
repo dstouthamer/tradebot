@@ -54,3 +54,41 @@ def load_config(path: str | Path) -> dict:
         if key not in cfg:
             raise ValueError(f"Config mist verplicht blok: '{key}'")
     return cfg
+
+
+# Verplichte velden per blok (gebruikt door de onboarding/validatie).
+_REQUIRED = {
+    "business": ["name", "domain", "phone_display", "phone_link", "whatsapp", "email", "region"],
+    "product": ["noun", "verb", "price_from"],
+    "lead": ["to_email"],
+}
+
+# Velden die nog op een placeholder mogen staan maar wél vóór livegang ingevuld
+# moeten worden (de agent/koper moet hierop wijzen).
+_PLACEHOLDER_HINTS = {
+    "lead.web3forms_access_key": "PLAK-HIER",
+    "business.domain": "jouwdomein",
+    "business.email": "jouwdomein",
+}
+
+
+def validate_config(cfg: dict) -> list[str]:
+    """Geef een lijst met problemen terug (leeg = compleet en klaar)."""
+    problems: list[str] = []
+    for block, fields in _REQUIRED.items():
+        b = cfg.get(block, {})
+        for f in fields:
+            if not str(b.get(f, "")).strip():
+                problems.append(f"Ontbreekt: {block}.{f}")
+
+    for path, marker in _PLACEHOLDER_HINTS.items():
+        block, field = path.split(".")
+        if marker.lower() in str(cfg.get(block, {}).get(field, "")).lower():
+            problems.append(f"Nog niet ingevuld (placeholder): {path}")
+
+    if not cfg.get("cities"):
+        problems.append("Geen lokale pagina's: voeg minstens 1 plaats toe onder 'cities'.")
+    if not cfg.get("segments"):
+        problems.append("Geen dienstpagina's: voeg minstens 1 item toe onder 'segments'.")
+    return problems
+

@@ -18,7 +18,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from siteflow import build_pages, build_preview, build_wxr, load_config
+from siteflow import build_pages, build_preview, build_wxr, load_config, validate_config
 
 ROOT = Path(__file__).resolve().parent
 
@@ -48,11 +48,12 @@ def main(argv: list[str]) -> int:
     build_preview(pages, cfg, preview_dir)
     print(f"✅ Preview-site:     {preview_dir.relative_to(ROOT)}/home.html")
 
-    # Waarschuw als de formuliersleutel nog niet is ingevuld.
-    if "PLAK-HIER" in cfg["lead"].get("web3forms_access_key", ""):
-        print("⚠️  Let op: 'web3forms_access_key' in config.yaml staat nog op de "
-              "placeholder. Maak een gratis key op https://web3forms.com zodat "
-              "aanvragen naar je e-mail worden gestuurd.")
+    # Valideer of de config compleet is (handig vóór livegang).
+    problems = validate_config(cfg)
+    if problems:
+        print("\n⚠️  Config nog niet helemaal compleet — vóór livegang oplossen:")
+        for p in problems:
+            print(f"   • {p}")
 
     print("\n🎉 Klaar. Open de preview in je browser of importeer de XML in WordPress.")
     print("   Zie README.md voor de exacte stappen.")

@@ -5,6 +5,10 @@ onderstaande opdrachten; de agent past `config.yaml` aan, draait de generator
 en — als je dat wilt — publiceert naar WordPress. Kopieer een zin, vul je
 wensen in, klaar.
 
+> **Nieuwe koper opzetten?** Gebruik [`ONBOARDING.md`](ONBOARDING.md): de agent
+> interviewt de koper en bouwt hun site van nul. Dit `AGENTS.md` gaat over het
+> daarna onderhouden/wijzigen van een bestaande site.
+
 ## Hoe een agent te werk gaat (vaste werkwijze)
 
 1. Lees `site-generator/config.yaml` (de enige bron van waarheid).

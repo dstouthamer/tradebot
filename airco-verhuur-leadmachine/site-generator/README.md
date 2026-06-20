@@ -9,6 +9,21 @@ SEO-meta en schema. Voor **WordPress** én als directe **browser-preview**.
 > [`AGENTS.md`](AGENTS.md) — die past de config aan, draait de generator en
 > publiceert naar WordPress.
 
+## Dit als product aanbieden aan kopers
+
+Lever je dit aan klanten? De **AI-agent interviewt de koper** en zet daarna
+hun complete leadmachine op — de koper hoeft niets technisch te doen.
+
+- **Met agent:** geef de agent [`ONBOARDING.md`](ONBOARDING.md). Die stelt de
+  vragen (bedrijf, product, steden, USP's…), vult een verse config in op basis
+  van [`config.template.yaml`](config.template.yaml), genereert, toont de
+  preview en publiceert na akkoord.
+- **Zonder agent:** de koper draait `python intake.py` en beantwoordt dezelfde
+  kernvragen in de terminal.
+- **Bewaking:** `validate_config` blokkeert livegang zolang verplichte velden
+  (zoals het e-mail-/formulier-koppeling) ontbreken — zo lever je nooit een
+  halve site op.
+
 ## Wat krijg je
 
 | Bestand | Wat |
@@ -17,6 +32,9 @@ SEO-meta en schema. Voor **WordPress** én als directe **browser-preview**.
 | `build/wordpress-import.xml` | Kant-en-klaar WordPress-importbestand (alle pagina's) |
 | `build/preview/home.html` | De hele site om direct in je browser te bekijken |
 | `config.voorbeeld-zonnepanelen.yaml` | Bewijs dat dezelfde machine een ander product maakt |
+| `ONBOARDING.md` | Interview-draaiboek waarmee de AI-agent een nieuwe koper opzet |
+| `config.template.yaml` | Leeg invul-template (per koper) met VERPLICHT-markers |
+| `intake.py` | Interactieve vragenlijst voor kopers zonder agent |
 
 ## In 3 stappen live (WordPress)
 

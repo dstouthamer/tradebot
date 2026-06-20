@@ -1,0 +1,59 @@
+# =====================================================================
+#  LEEG INVUL-TEMPLATE  —  de AI-agent vult dit in samen met de koper.
+# =====================================================================
+#  Velden met (VERPLICHT) moeten ingevuld zijn vóór livegang.
+#  Zie ONBOARDING.md voor de vragen die de agent stelt.
+#  Kopieer dit naar bijv. config.<klantnaam>.yaml en draai:
+#      python generate.py config.<klantnaam>.yaml
+# =====================================================================
+
+business:
+  name: ""                       # (VERPLICHT) bedrijfsnaam
+  domain: ""                     # (VERPLICHT) bv. https://www.klantdomein.nl  (zonder slash op het eind)
+  phone_display: ""              # (VERPLICHT) zoals getoond, bv. "085 - 123 45 67"
+  phone_link: ""                 # (VERPLICHT) internationaal, bv. "+31851234567"
+  whatsapp: ""                   # (VERPLICHT) internationaal zonder +, bv. "31612345678"
+  email: ""                      # (VERPLICHT) zakelijk e-mailadres
+  region: ""                     # (VERPLICHT) werkgebied, bv. "Midden-Nederland"
+  address: ""                    # straat + postcode + plaats (voor lokale SEO)
+  kvk: ""                        # KvK-nummer
+  rating: ""                     # reviewscore, bv. "4,9" (alleen invullen als waar)
+  reviews_count: 0               # aantal reviews (alleen als waar)
+  opening_hours: ""              # bv. "Ma-zo 08:00 - 21:00"
+
+brand:
+  primary_color: "#0b7285"       # hoofdkleur
+  accent_color: "#fab005"        # opvallende CTA-kleur
+  tagline: ""                    # korte pakkende zin, bv. "Vandaag besteld, vandaag koel."
+
+product:
+  noun: ""                       # (VERPLICHT) enkelvoud, bv. "mobiele airco"
+  noun_plural: ""                # meervoud
+  verb: ""                       # (VERPLICHT) "huren" / "kopen" / "laten installeren"
+  verb_noun: ""                  # "verhuur" / "verkoop" / "installatie"
+  what_you_offer: ""             # 1 zin: het kernvoordeel
+  pain: ""                       # 1-2 zinnen: het probleem van de klant
+  promise: ""                    # 1 zin: wat jij belooft (mag {noun} bevatten)
+  business_category: ""          # voor lokale SEO/schema, bv. "Airconditioning-verhuurservice"
+  price_from: ""                 # (VERPLICHT) 'vanaf'-prijs, bv. "€39"
+  price_unit: ""                 # bv. "per week" / "compleet geïnstalleerd"
+
+lead:
+  to_email: ""                   # (VERPLICHT) hier komen aanvragen binnen (meestal = business.email)
+  web3forms_access_key: "PLAK-HIER-JE-WEB3FORMS-KEY"   # gratis key via https://web3forms.com
+  thanks_message: "Gelukt! We nemen zo snel mogelijk contact met je op."
+
+copy:
+  seo_hook: ""                   # kort in SEO-titels, bv. "Vandaag Geleverd"
+  local_hero_suffix: ""          # achter de H1 op lokale pagina's, bv. "vandaag geleverd"
+  local_speed_line: ""           # mag {city} en {delivery_time} bevatten
+
+usps: []                         # 3-4 items: { icon: "⚡", title: "...", text: "..." }
+segments: []                     # 1+ items: { slug, name, h1, intro, bullets: [...], cta }
+packages: []                     # 1+ items: { name, audience, contents, price }
+steps: []                        # 3-4 items: { title, text }
+faq: []                          # 4+ items: { q, a }
+reviews: []                      # 0+ items: { name, place, stars, text }
+about:
+  text: ""                       # 2-4 zinnen over het bedrijf
+cities: []                       # 1+ items: { name, slug, neighborhoods, delivery_time, neighbors: [...] }
