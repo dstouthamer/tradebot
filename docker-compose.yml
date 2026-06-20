@@ -1,0 +1,54 @@
+# AI Boekhouder — productie-stack voor een VPS (bv. bij mijn.host).
+# Caddy regelt automatisch gratis HTTPS (Let's Encrypt) voor je domein.
+#
+#   1) Zet je domein (A-record) naar het IP van je VPS.
+#   2) Vul .env (kopieer van .env.example) — zet zeker BOEKHOUDER_SECRET_KEY.
+#   3) Zet DOMAIN hieronder of in .env, dan:  docker compose up -d --build
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      BOEKHOUDER_DB_PATH: /data/boekhouder.db
+      # Voor schaal: zet hieronder Postgres aan (en start met --profile postgres).
+      # BOEKHOUDER_DATABASE_URL: postgresql://boekhouder:boekhouder@db:5432/boekhouder
+    volumes:
+      - boekhouder-data:/data
+    expose:
+      - "8000"
+
+  # Optioneel: PostgreSQL voor echte schaal. Activeer met:
+  #   docker compose --profile postgres up -d --build
+  # en zet BOEKHOUDER_DATABASE_URL hierboven (en psycopg in requirements aan).
+  db:
+    image: postgres:16
+    profiles: ["postgres"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: boekhouder
+      POSTGRES_PASSWORD: boekhouder
+      POSTGRES_DB: boekhouder
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  boekhouder-data:
+  postgres-data:
+  caddy-data:
+  caddy-config:

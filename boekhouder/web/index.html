@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Boekhouder</title>
+<style>
+  :root{
+    --bg:#0f1419; --panel:#171f29; --panel2:#1f2a37; --line:#2b3947;
+    --text:#e6edf3; --muted:#9fb0c0; --accent:#3b82f6; --accent2:#2563eb;
+    --groen:#22c55e; --oranje:#f59e0b; --rood:#ef4444;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+       background:var(--bg);color:var(--text)}
+  a{color:var(--accent)}
+  .wrap{max-width:920px;margin:0 auto;padding:18px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;
+         padding:14px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+  header h1{font-size:18px;margin:0}
+  header .who{color:var(--muted);font-size:13px}
+  button{cursor:pointer;border:0;border-radius:8px;padding:10px 14px;font-weight:600;
+          background:var(--accent);color:#fff}
+  button.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}
+  button:disabled{opacity:.5;cursor:default}
+  input,textarea{width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--line);
+        background:var(--panel2);color:var(--text);font:inherit}
+  label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;
+        padding:18px;margin:16px 0}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .tabs{display:flex;gap:8px;margin-bottom:8px}
+  .tabs button{background:transparent;color:var(--muted);border:1px solid var(--line)}
+  .tabs button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .reply{white-space:pre-wrap;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+         background:#0b1118;border:1px solid var(--line);border-radius:10px;padding:14px}
+  .zone{display:inline-block;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:700}
+  .zone.GROEN{background:rgba(34,197,94,.15);color:var(--groen)}
+  .zone.ORANJE{background:rgba(245,158,11,.15);color:var(--oranje)}
+  .zone.ROOD{background:rgba(239,68,68,.15);color:var(--rood)}
+  .muted{color:var(--muted)}
+  .err{color:var(--rood);font-size:13px;min-height:18px}
+  .hint{font-size:12px;color:var(--muted)}
+  .examples button{background:var(--panel2);color:var(--text);border:1px solid var(--line);
+        font-weight:500;font-size:13px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:700px){.grid{grid-template-columns:1fr}}
+  ul{margin:6px 0;padding-left:18px} li{margin:3px 0;font-size:13px}
+  .oauth a{display:inline-block;text-decoration:none;background:var(--panel2);
+        border:1px solid var(--line);color:var(--text);padding:10px 14px;border-radius:8px;font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧾 AI Boekhouder</h1>
+  <div class="row" style="align-items:center">
+    <span class="who" id="who"></span>
+    <button class="secondary" id="logout" style="display:none" onclick="logout()">Uitloggen</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- AUTH -->
+  <div id="authView">
+    <div class="card" style="max-width:460px;margin:40px auto">
+      <div class="tabs">
+        <button id="tabLogin" class="active" onclick="showTab('login')">Inloggen</button>
+        <button id="tabReg" onclick="showTab('reg')">Registreren</button>
+      </div>
+
+      <div id="loginForm">
+        <label>E-mailadres</label><input id="loginEmail" type="email" autocomplete="email">
+        <label>Wachtwoord</label><input id="loginPw" type="password" autocomplete="current-password">
+        <div class="err" id="loginErr"></div>
+        <button onclick="login()" style="width:100%">Inloggen</button>
+      </div>
+
+      <div id="regForm" style="display:none">
+        <label>Bedrijfsnaam</label><input id="regCompany" type="text">
+        <label>E-mailadres</label><input id="regEmail" type="email" autocomplete="email">
+        <label>Wachtwoord (min. 8 tekens)</label><input id="regPw" type="password" autocomplete="new-password">
+        <div class="err" id="regErr"></div>
+        <button onclick="register()" style="width:100%">Account aanmaken</button>
+      </div>
+
+      <div id="oauth" class="oauth" style="margin-top:14px"></div>
+      <div class="hint" id="idinHint" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div id="appView" style="display:none">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <strong>Chat met je boekhouder</strong>
+        <span class="hint">Niets wordt definitief zonder jouw bevestiging.</span>
+      </div>
+      <label>Bericht</label>
+      <textarea id="msg" rows="2" placeholder="Maak factuur voor De Vries airco montage 1850 ex btw"></textarea>
+      <div class="row" style="margin-top:10px">
+        <button onclick="send()">Verstuur</button>
+        <button class="secondary" id="confirmBtn" onclick="confirmConcept()" disabled>✅ Bevestig concept</button>
+        <label class="secondary" style="display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;width:auto;color:var(--text);font-weight:600;cursor:pointer">
+          📎 Upload bon/bank<input id="file" type="file" style="display:none" onchange="upload()">
+        </label>
+      </div>
+      <div class="examples row" style="margin-top:10px">
+        <button onclick="ex(this)">Geef een prognose voor de komende maanden</button>
+        <button onclick="ex(this)">Hoeveel btw moet ik betalen dit kwartaal?</button>
+        <button onclick="ex(this)">Maak offerte hybride warmtepomp Apeldoorn 6500 incl btw</button>
+        <button onclick="ex(this)">Welke kosten mis ik nog?</button>
+      </div>
+      <div style="margin-top:14px">
+        <span class="zone" id="zone" style="display:none"></span>
+        <span class="muted" id="agent"></span>
+      </div>
+      <div class="reply" id="reply" style="margin-top:8px;display:none"></div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <strong>Controlelijst</strong><button class="secondary" onclick="loadControl()">↻</button>
+        </div>
+        <ul id="control"><li class="muted">Laden…</li></ul>
+      </div>
+      <div class="card">
+        <div class="row" style="justify-content:space-between">
+          <strong>Audit trail</strong><button class="secondary" onclick="loadAudit()">↻</button>
+        </div>
+        <ul id="audit"><li class="muted">Laden…</li></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+let token = localStorage.getItem("bh_token") || "";
+let email = localStorage.getItem("bh_email") || "";
+
+function headers(json=true){
+  const h = {}; if(json) h["Content-Type"]="application/json";
+  if(token) h["Authorization"]="Bearer "+token; return h;
+}
+function showTab(t){
+  $("tabLogin").classList.toggle("active",t==="login");
+  $("tabReg").classList.toggle("active",t==="reg");
+  $("loginForm").style.display=t==="login"?"block":"none";
+  $("regForm").style.display=t==="reg"?"block":"none";
+}
+async function loadMethods(){
+  try{
+    const m = await (await fetch("/auth/methods")).json();
+    const oauth = $("oauth"); oauth.innerHTML="";
+    m.filter(x=>x.available && (x.id==="google"||x.id==="microsoft"))
+     .forEach(x=>{ const a=document.createElement("a"); a.href="/auth/"+x.id+"/login";
+                   a.textContent=x.label; oauth.appendChild(a); });
+    const idin = m.find(x=>x.id==="idin");
+    $("idinHint").textContent = idin && !idin.available ? idin.note : "";
+  }catch(e){}
+}
+async function register(){
+  $("regErr").textContent="";
+  const body={company_name:$("regCompany").value,email:$("regEmail").value,password:$("regPw").value};
+  const r = await fetch("/auth/register",{method:"POST",headers:headers(),body:JSON.stringify(body)});
+  const d = await r.json();
+  if(!r.ok){ $("regErr").textContent=d.detail||"Registratie mislukt"; return; }
+  setSession(d.token, body.email);
+}
+async function login(){
+  $("loginErr").textContent="";
+  const body={email:$("loginEmail").value,password:$("loginPw").value};
+  const r = await fetch("/auth/login",{method:"POST",headers:headers(),body:JSON.stringify(body)});
+  const d = await r.json();
+  if(!r.ok){ $("loginErr").textContent=d.detail||"Inloggen mislukt"; return; }
+  setSession(d.token, body.email);
+}
+function setSession(t,e){
+  token=t; email=e; localStorage.setItem("bh_token",t); localStorage.setItem("bh_email",e);
+  render();
+}
+function logout(){ token=""; email=""; localStorage.removeItem("bh_token");
+  localStorage.removeItem("bh_email"); render(); }
+
+function ex(b){ $("msg").value=b.textContent; send(); }
+
+function renderReply(d){
+  $("reply").style.display="block"; $("reply").textContent=d.text;
+  $("zone").style.display="inline-block"; $("zone").className="zone "+d.risk_zone;
+  $("zone").textContent=d.risk_zone;
+  $("agent").textContent=" · "+d.agent;
+  $("confirmBtn").disabled = !d.requires_confirmation;
+}
+async function send(){
+  const message=$("msg").value.trim(); if(!message) return;
+  const r=await fetch("/bericht",{method:"POST",headers:headers(),
+      body:JSON.stringify({message,session_id:"web"})});
+  if(r.status===401){ logout(); return; }
+  renderReply(await r.json()); loadControl(); loadAudit();
+}
+async function confirmConcept(){
+  const r=await fetch("/approve?session_id=web",{method:"POST",headers:headers(false)});
+  const d=await r.json();
+  $("reply").style.display="block"; $("reply").textContent=d.message||JSON.stringify(d);
+  $("confirmBtn").disabled=true; loadAudit();
+}
+async function upload(){
+  const f=$("file").files[0]; if(!f) return;
+  const fd=new FormData(); fd.append("file",f);
+  const r=await fetch("/upload?session_id=web",{method:"POST",
+      headers:{"Authorization":"Bearer "+token},body:fd});
+  if(r.status===401){ logout(); return; }
+  renderReply(await r.json()); loadControl(); $("file").value="";
+}
+async function loadControl(){
+  try{ const items=await (await fetch("/controlelijst",{headers:headers(false)})).json();
+    $("control").innerHTML = items.length ? items.map(i=>`<li>[${i.kind}] ${i.summary}</li>`).join("")
+      : '<li class="muted">Geen openstaande controlepunten.</li>';
+  }catch(e){}
+}
+async function loadAudit(){
+  try{ const rows=await (await fetch("/audit?limit=12",{headers:headers(false)})).json();
+    $("audit").innerHTML = rows.length ? rows.map(r=>`<li>${(r.ts||"").slice(0,19)} · ${r.proposed_action} · ${r.decision}</li>`).join("")
+      : '<li class="muted">Nog geen activiteit.</li>';
+  }catch(e){}
+}
+function render(){
+  const authed=!!token;
+  $("authView").style.display=authed?"none":"block";
+  $("appView").style.display=authed?"block":"none";
+  $("logout").style.display=authed?"inline-block":"none";
+  $("who").textContent=authed?email:"";
+  if(authed){ loadControl(); loadAudit(); } else { loadMethods(); }
+}
+// OAuth callback levert ?token=... terug -> opslaan.
+(function(){
+  const p=new URLSearchParams(location.search);
+  if(p.get("token")){ setSession(p.get("token"), p.get("email")||""); history.replaceState({},"",location.pathname); }
+})();
+render();
+</script>
+</body>
+</html>
