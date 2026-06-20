@@ -1,0 +1,5 @@
+# Leadmachine site-generator — dependencies
+PyYAML>=6.0
+# (jinja2 staat hier voor toekomstige template-uitbreiding; de generator
+#  draait al met alleen PyYAML + de Python-standaardbibliotheek.)
+Jinja2>=3.1

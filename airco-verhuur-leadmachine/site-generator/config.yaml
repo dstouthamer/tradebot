@@ -1,0 +1,124 @@
+# =====================================================================
+#  LEADMACHINE — CONFIGURATIE  (dit is het ENIGE bestand dat jij aanpast)
+# =====================================================================
+#  Verander hieronder de gegevens en draai:  python generate.py
+#  -> levert een kant-en-klaar WordPress-importbestand + previewsite.
+#
+#  Ander product verkopen? Pas 'product', 'usps', 'segments', 'packages',
+#  'faq' en 'cities' aan en draai opnieuw. Zie config.voorbeeld-zonnepanelen.yaml
+# =====================================================================
+
+business:
+  name: "CoolRent"                      # << jouw bedrijfsnaam
+  domain: "https://www.jouwdomein.nl"   # << jouw domein (zonder slash op het eind)
+  phone_display: "085 - 123 45 67"      # zoals getoond
+  phone_link: "+31851234567"            # voor klik-om-te-bellen (internationaal)
+  whatsapp: "31612345678"               # WhatsApp-nummer, internationaal zonder +
+  email: "info@jouwdomein.nl"
+  region: "Midden-Nederland"            # jouw werkgebied
+  address: "Voorbeeldstraat 1, 1234 AB Voorbeeldstad"
+  kvk: "12345678"
+  rating: "4,9"                         # reviewscore (alleen tonen als waar)
+  reviews_count: 127
+  opening_hours: "Ma-zo 08:00 - 21:00"
+
+brand:
+  primary_color: "#0b7285"              # hoofdkleur (knoppen/accenten)
+  accent_color: "#fab005"               # opvallende CTA-kleur
+  tagline: "Vandaag besteld, vandaag koel."
+
+# ---- HET PRODUCT (verander dit blok om een ander product te verkopen) ----
+product:
+  noun: "mobiele airco"                 # enkelvoud, kleine letter
+  noun_plural: "mobiele airco's"
+  verb: "huren"                         # huren / kopen / laten installeren
+  verb_noun: "verhuur"                  # verhuur / verkoop / installatie
+  what_you_offer: "tijdelijke verkoeling zonder de kosten en het gedoe van een vaste installatie"
+  pain: "Te warm om te slapen of een oververhit kantoor? Een vaste airco kost duizenden euro's en duurt weken."
+  promise: "Wij bezorgen, installeren en halen je {noun} weer op. Per dag, week of maand."
+  business_category: "Airconditioning-verhuurservice"   # voor lokale SEO/schema
+  price_from: "€39"                     # 'vanaf'-prijs
+  price_unit: "per week"
+
+# ---- WAAR LEADS NAARTOE GAAN (jij koos: e-mail) ----
+lead:
+  to_email: "info@jouwdomein.nl"        # hier komen aanvragen binnen
+  # Gratis formulierdienst die naar je e-mail mailt, GEEN plugin/server nodig.
+  # Maak gratis een key op https://web3forms.com (1 min) en plak die hieronder.
+  web3forms_access_key: "PLAK-HIER-JE-WEB3FORMS-KEY"
+  thanks_message: "Gelukt! We bellen of appen je binnen enkele minuten."
+
+# ---- Product-afhankelijke 'haakjes' in koppen/titels (optioneel) ----
+copy:
+  seo_hook: "Vandaag Geleverd"                 # in SEO-titels
+  local_hero_suffix: "vandaag geleverd"        # achter de H1 op lokale pagina's
+  local_speed_line: "Bestel je vóór 15:00, dan zijn we vaak nog dezelfde dag in {city}."
+
+usps:
+  - { icon: "⚡", title: "Vandaag geleverd", text: "Vaak nog dezelfde dag bij je in {region}." }
+  - { icon: "🔧", title: "Installatie inbegrepen", text: "Wij plaatsen, sluiten aan en halen weer op. Plug & play." }
+  - { icon: "📅", title: "Flexibel huren", text: "Per dag, week of maand. Geen lange contracten." }
+  - { icon: "💶", title: "Eerlijke prijzen", text: "Vooraf duidelijk, geen verrassingen achteraf." }
+
+# ---- DOELGROEP-/DIENSTPAGINA'S ----
+segments:
+  - slug: "particulier"
+    name: "Particulier & thuis"
+    h1: "Mobiele airco huren voor thuis — koel slapen vanaf vanavond"
+    intro: "Te warm om te slapen? Huur een mobiele airco en slaap vannacht weer comfortabel. Wij bezorgen en installeren, jij geniet."
+    bullets: ["Stille units, geschikt voor de slaapkamer", "Korte huur mogelijk (weekend/week)", "Betaalbaar en snel geleverd"]
+    cta: "Airco voor thuis aanvragen"
+  - slug: "zakelijk"
+    name: "Kantoor & bedrijf"
+    h1: "Airco huren voor kantoor of bedrijf in {region}"
+    intro: "Een warme werkplek kost productiviteit. Met een mobiele airco heeft je team binnen 24 uur een aangename werktemperatuur. Flexibel huren, geen investering, factuur met btw."
+    bullets: ["Zakelijke factuur met btw, huur is aftrekbaar", "Ook meerdere units, snel geleverd", "Korting bij langere huurperiode"]
+    cta: "Offerte voor je bedrijf aanvragen"
+  - slug: "serverruimte"
+    name: "Serverruimte & IT"
+    h1: "Noodkoeling & airco huren voor serverruimtes"
+    intro: "Valt je koeling uit? Oververhitting legt servers binnen minuten plat. Wij leveren met spoed mobiele koeling, 24/7 bereikbaar bij calamiteiten."
+    bullets: ["24/7 spoedlevering", "Juiste koelcapaciteit (kW) gegarandeerd", "Voorkom downtime en dataverlies"]
+    cta: "Direct bellen voor spoedkoeling"
+  - slug: "evenement"
+    name: "Evenement & horeca"
+    h1: "Mobiele airco & koeling huren voor je evenement"
+    intro: "Bruiloft, festival, feesttent of vol terras? Houd je gasten koel. Wij leveren op locatie, bouwen op en halen op."
+    bullets: ["Meerdere units, op- en afbouw", "Levering op locatie", "Geschikt voor grote ruimtes en tenten"]
+    cta: "Offerte voor je evenement"
+
+# ---- PRIJZEN / PAKKETTEN ----
+packages:
+  - { name: "Basis (1 unit)", audience: "Slaapkamer / kleine ruimte", contents: "Mobiele airco tot ~2,5 kW, bezorgd", price: "vanaf €39/week" }
+  - { name: "Comfort", audience: "Woonkamer / kantoor", contents: "Unit + installatie + raamafdichting", price: "vanaf €59/week" }
+  - { name: "Zakelijk / Serverruimte", audience: "Bedrijf / IT", contents: "Hoger vermogen, SLA, snelle vervanging", price: "offerte op maat" }
+  - { name: "Evenement", audience: "Festival / tent / horeca", contents: "Meerdere units, op- en afbouw", price: "offerte op maat" }
+
+steps:
+  - { title: "Aanvraag", text: "Vertel ons de ruimte en gewenste datum. Reactie binnen enkele minuten." }
+  - { title: "Advies & offerte", text: "Wij berekenen de juiste capaciteit en geven een vaste prijs." }
+  - { title: "Levering & installatie", text: "Wij plaatsen plug & play en regelen de afdichting." }
+  - { title: "Ophalen", text: "Klaar met huren? Eén appje en wij halen alles op." }
+
+faq:
+  - { q: "Hoe snel kan ik een mobiele airco geleverd krijgen?", a: "Vaak nog dezelfde dag in {region}, bij bestelling vóór 15:00." }
+  - { q: "Wat kost het om een airco te huren?", a: "Al vanaf €39 per week, inclusief bezorging en installatie. Bekijk de tarievenpagina voor alle prijzen." }
+  - { q: "Heeft de airco een raam of buisje nodig?", a: "Ja, een mobiele airco voert warme lucht af via een slang. Wij regelen een nette raamafdichting bij de installatie." }
+  - { q: "Hoeveel kW heb ik nodig voor mijn ruimte?", a: "Wij berekenen dat gratis op basis van je m² en situatie, zodat de unit goed koelt zonder onnodig verbruik." }
+  - { q: "Installeren jullie de airco ook?", a: "Ja, bezorging, installatie en ophalen zijn inbegrepen." }
+  - { q: "Wat is de minimale huurperiode?", a: "Je kunt al per dag huren. Bij langere periodes geldt korting." }
+  - { q: "Wat als de airco kapotgaat tijdens de huur?", a: "Bel of app ons en we vervangen de unit zo snel mogelijk, vaak dezelfde dag." }
+
+reviews:
+  - { name: "Sandra V.", place: "Voorbeeldstad", stars: 5, text: "Binnen 3 uur geleverd op een snikhete dag. Top geregeld, eindelijk weer koel slapen!" }
+  - { name: "Mark de J.", place: "Buurdorp", stars: 5, text: "Voor ons kantoor gehuurd. Snel, netjes geïnstalleerd en een eerlijke prijs." }
+  - { name: "IT-bedrijf B.V.", place: "Regio", stars: 5, text: "Serverruimte liep heet, binnen 2 uur noodkoeling. Hebben onze dag gered." }
+
+about:
+  text: "Wij zijn een lokale specialist in mobiele klimaatverhuur in {region}. Geen callcenter, maar persoonlijk contact en snelle service. We danken ons bestaan aan één simpel idee: niemand zou op een hete dag hoeven te wachten op verkoeling."
+
+# ---- LOKALE SEO-PAGINA'S (voeg gerust steden toe of weg) ----
+cities:
+  - { name: "Voorbeeldstad", slug: "voorbeeldstad", neighborhoods: "het centrum tot bedrijventerrein De Noord", delivery_time: "enkele uren", neighbors: ["Buurdorp", "Noorderwijk", "Zuiderveen"] }
+  - { name: "Buurdorp", slug: "buurdorp", neighborhoods: "de dorpskern en buitengebied", delivery_time: "dezelfde dag", neighbors: ["Voorbeeldstad", "Noorderwijk"] }
+  - { name: "Noorderwijk", slug: "noorderwijk", neighborhoods: "alle wijken", delivery_time: "dezelfde dag", neighbors: ["Voorbeeldstad", "Buurdorp"] }

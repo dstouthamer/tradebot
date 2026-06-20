@@ -1,0 +1,96 @@
+# =====================================================================
+#  VOORBEELD: ZELFDE MACHINE, ANDER PRODUCT (zonnepanelen)
+# =====================================================================
+#  Dit laat zien dat je met DEZELFDE generator een compleet andere
+#  website maakt door alleen deze config te wijzigen. Draai:
+#      python generate.py config.voorbeeld-zonnepanelen.yaml
+# =====================================================================
+
+business:
+  name: "ZonneTop"
+  domain: "https://www.zonnetop.nl"
+  phone_display: "085 - 987 65 43"
+  phone_link: "+31859876543"
+  whatsapp: "31698765432"
+  email: "info@zonnetop.nl"
+  region: "Gelderland"
+  address: "Zonneweg 10, 6800 AB Arnhem"
+  kvk: "87654321"
+  rating: "4,8"
+  reviews_count: 212
+  opening_hours: "Ma-vr 08:00 - 18:00"
+
+brand:
+  primary_color: "#1864ab"
+  accent_color: "#f08c00"
+  tagline: "Bespaar vanaf dag één."
+
+product:
+  noun: "zonnepanelen"
+  noun_plural: "zonnepanelen"
+  verb: "laten installeren"
+  verb_noun: "installatie"
+  what_you_offer: "een lagere energierekening en meer woningwaarde, professioneel geïnstalleerd"
+  pain: "Hoge energierekening en stijgende stroomprijzen? Zelf uitzoeken is een doolhof."
+  promise: "Wij adviseren, leveren en installeren je {noun} compleet — met garantie."
+  business_category: "Zonnepaneleninstallateur"
+  price_from: "€2.950"
+  price_unit: "compleet geïnstalleerd"
+
+lead:
+  to_email: "info@zonnetop.nl"
+  web3forms_access_key: "PLAK-HIER-JE-WEB3FORMS-KEY"
+  thanks_message: "Bedankt! Een energieadviseur belt je binnen 1 werkdag voor een gratis besparingsplan."
+
+copy:
+  seo_hook: "Gratis Besparingsplan"
+  local_hero_suffix: "gratis dakcheck"
+  local_speed_line: "Vraag een gratis dakcheck aan in {city}; we plannen je installatie {delivery_time}."
+
+usps:
+  - { icon: "💰", title: "Snel terugverdiend", text: "Gemiddeld binnen 6-7 jaar terugverdiend in {region}." }
+  - { icon: "🛠️", title: "Eigen monteurs", text: "Geen onderaannemers — installatie door ons eigen team." }
+  - { icon: "📑", title: "Volledig ontzorgd", text: "Advies, vergunningcheck, installatie en aanmelding netbeheerder." }
+  - { icon: "🛡️", title: "25 jaar garantie", text: "Topmerken met lange product- en vermogensgarantie." }
+
+segments:
+  - slug: "particulier"
+    name: "Woning"
+    h1: "Zonnepanelen voor je woning in {region}"
+    intro: "Verlaag je energierekening met een installatie op maat. Wij berekenen je opbrengst en besparing vooraf."
+    bullets: ["Gratis dakcheck en besparingsplan", "Installatie binnen enkele weken", "Inclusief omvormer en montagesysteem"]
+    cta: "Gratis besparingsplan aanvragen"
+  - slug: "zakelijk"
+    name: "Bedrijfsdak"
+    h1: "Zonnepanelen voor bedrijven en grote daken"
+    intro: "Benut je bedrijfsdak en profiteer van fiscale voordelen (EIA/KIA). Wij verzorgen het hele traject."
+    bullets: ["Rendementsberekening en subsidieadvies", "Schaalbaar tot grote daken", "Onderhoud en monitoring"]
+    cta: "Zakelijke offerte aanvragen"
+
+packages:
+  - { name: "Starter (8 panelen)", audience: "Kleine woning", contents: "8 panelen + omvormer, geïnstalleerd", price: "vanaf €2.950" }
+  - { name: "Comfort (12 panelen)", audience: "Gemiddelde woning", contents: "12 panelen + omvormer + monitoring", price: "vanaf €4.200" }
+  - { name: "Zakelijk", audience: "Bedrijfsdak", contents: "Maatwerk + subsidiebegeleiding", price: "offerte op maat" }
+
+steps:
+  - { title: "Gratis dakcheck", text: "We bekijken je dak en verbruik en maken een besparingsplan." }
+  - { title: "Advies & offerte", text: "Heldere offerte met opbrengst, besparing en terugverdientijd." }
+  - { title: "Installatie", text: "Ons eigen team installeert netjes, vaak binnen één dag." }
+  - { title: "Aanmelden & profiteren", text: "Wij melden aan bij de netbeheerder. Jij bespaart direct." }
+
+faq:
+  - { q: "Wat kosten zonnepanelen?", a: "Een complete installatie start vanaf €2.950. De exacte prijs hangt af van je dak en verbruik — je krijgt een vaste offerte." }
+  - { q: "Hoelang duurt de installatie?", a: "Een gemiddelde woninginstallatie is vaak binnen één dag klaar." }
+  - { q: "Hoeveel bespaar ik?", a: "Gemiddeld enkele honderden euro's per jaar; we berekenen jouw besparing vooraf." }
+  - { q: "Regelen jullie de aanmelding bij de netbeheerder?", a: "Ja, dat verzorgen wij volledig." }
+
+reviews:
+  - { name: "Familie Jansen", place: "Arnhem", stars: 5, text: "Strak geïnstalleerd in één dag, en de besparing is precies zoals voorgerekend." }
+  - { name: "Bouwbedrijf K.", place: "Nijmegen", stars: 5, text: "Groot bedrijfsdak vol gelegd, inclusief subsidieadvies. Top geregeld." }
+
+about:
+  text: "ZonneTop is een lokale zonnepaneelspecialist in {region} met een eigen montageteam. Geen verkooppraatjes, maar eerlijke berekeningen en vakwerk."
+
+cities:
+  - { name: "Arnhem", slug: "arnhem", neighborhoods: "Klarendal tot Schuytgraaf", delivery_time: "binnen enkele weken", neighbors: ["Velp", "Oosterbeek"] }
+  - { name: "Nijmegen", slug: "nijmegen", neighborhoods: "alle wijken", delivery_time: "binnen enkele weken", neighbors: ["Arnhem", "Wijchen"] }
