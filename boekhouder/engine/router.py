@@ -91,6 +91,7 @@ class Router:
             IntentType.BANK_IMPORT: self._bank,
             IntentType.FISCAAL_ADVIES: self._fiscal,
             IntentType.OPTIMALISATIE: self._optimize,
+            IntentType.BTW_BUITENLAND: self._btw_buitenland,
             IntentType.CFO_ADVIES: self._cfo,
         }
         handler = dispatch.get(intent.type, self._unknown)
@@ -188,6 +189,9 @@ class Router:
     def _fiscal(self, intent: Intent, **_) -> Reply:
         res = self.fiscal.run(intent.raw)
         return Reply(formatters.fiscaal_advies(res.payload), "fiscal", res.risk_zone)
+
+    def _btw_buitenland(self, intent: Intent, **_) -> Reply:
+        return Reply(formatters.btw_buitenland(), "btw_buitenland", RiskZone.GROEN)
 
     _ENERGY_WORDS = ("zonnepanel", "warmtepomp", "laadpaal", "isolatie", "energie",
                      "led", "accu", "zonneboiler", "warmteterugwin")

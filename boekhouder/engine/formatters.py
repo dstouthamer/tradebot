@@ -86,6 +86,31 @@ def financiele_analyse(a: CfoAnalysis) -> str:
 
 
 # ----------------------- optimalisatie-scan --------------------------- #
+def btw_buitenland() -> str:
+    from boekhouder.domain import eu_btw
+
+    laag = ", ".join(f"{eu_btw.name(c)} {r:g}%" for c, r in eu_btw.lowest(5))
+    hoog = ", ".join(f"{eu_btw.name(c)} {r:g}%" for c, r in eu_btw.highest(2))
+    lines = [
+        "Btw in de EU & verkoop over de grens",
+        "",
+        f"Laagste standaardtarieven (indicatief, peildatum {eu_btw.PEILDATUM}): {laag}.",
+        f"Hoogste: {hoog}. Nederland: 21%.",
+        "",
+        "⚠️ Belangrijk: een NL-ondernemer die aan NL-klanten levert, betaalt NL-btw (21%) — "
+        "waar je je ook inschrijft. Lagere btw elders telt alleen bij ÉCHTE "
+        "grensoverschrijdende handel met substance. Omzet kunstmatig verplaatsen = "
+        "schijnconstructie (verboden).",
+        "",
+        "De legale regels:",
+    ]
+    for titel, uitleg in eu_btw.CROSS_BORDER:
+        lines.append(f"• {titel}: {uitleg}")
+    lines += ["", f"Tarieven indicatief — controleer bij de bron ({eu_btw.SOURCE}). "
+              "Bij grensoverschrijdende verkoop: laat je boekhouder meekijken."]
+    return "\n".join(lines)
+
+
 def _eur(amount: float) -> str:
     from boekhouder.domain.money import Money
 

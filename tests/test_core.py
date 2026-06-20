@@ -130,6 +130,33 @@ def test_compliance_blocks_underreporting_turnover():
     assert not ca.run("hoe kan ik minder belasting betalen").blocked
 
 
+def test_compliance_blocks_sham_constructions():
+    ca = ComplianceAgent()
+    assert ca.run("kan ik mijn omzet naar Bulgarije verplaatsen om minder btw").blocked
+    assert ca.run("zet een brievenbusfirma in Dubai op").blocked
+    # feitelijke EU-btw-vraag is geen fraude
+    assert not ca.run("wat is de btw bij leveren aan Duitsland").blocked
+
+
+def test_eu_btw_knowledge():
+    from boekhouder.domain import eu_btw
+
+    assert eu_btw.rate("NL") == 21
+    low = dict(eu_btw.lowest(3))
+    assert "LU" in low                      # Luxemburg laagste
+    assert max(eu_btw.EU_BTW.values()) == eu_btw.EU_BTW["HU"]   # Hongarije hoogste
+
+
+def test_knowledge_review_flags_outdated():
+    import datetime
+
+    from boekhouder import knowledge
+
+    items = knowledge.review(datetime.date(2030, 6, 1))   # ver in de toekomst
+    onderwerpen = " ".join(i["onderwerp"] for i in items)
+    assert "Belastingtarieven" in onderwerpen and "btw" in onderwerpen.lower()
+
+
 # ------------------------------------------------------------- optimization
 def test_optimization_scan_is_sector_and_legal():
     from boekhouder.agents.optimization import OptimizationAgent

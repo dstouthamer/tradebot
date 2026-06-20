@@ -81,6 +81,7 @@ class IntentType(str, Enum):
     MAAK_OFFERTE = "maak_offerte"
     FISCAAL_ADVIES = "fiscaal_advies"
     OPTIMALISATIE = "optimalisatie"    # proactieve legale belastingoptimalisatie-scan
+    BTW_BUITENLAND = "btw_buitenland"  # EU-btw / grensoverschrijdende regels
     CFO_ADVIES = "cfo_advies"
     BANK_IMPORT = "bank_import"
     BEVESTIG = "bevestig"          # user confirms a pending concept
