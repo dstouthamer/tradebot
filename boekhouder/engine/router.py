@@ -178,10 +178,29 @@ class Router:
         res = self.fiscal.run(intent.raw)
         return Reply(formatters.fiscaal_advies(res.payload), "fiscal", res.risk_zone)
 
+    _ENERGY_WORDS = ("zonnepanel", "warmtepomp", "laadpaal", "isolatie", "energie",
+                     "led", "accu", "zonneboiler", "warmteterugwin")
+    _MILIEU_WORDS = ("milieu", "elektrische", "elektrisch", "recycl", "circulair")
+
     def _optimize(self, intent: Intent, *, tenant_id: str, **_) -> Reply:
-        res = self.optimization.run(self.profile(tenant_id),
-                                    self.store.financial_totals(tenant_id))
-        return Reply(formatters.optimalisatie_scan(res.payload), "optimization", res.risk_zone)
+        profile = self.profile(tenant_id)
+        totals = self.store.financial_totals(tenant_id)
+        low = intent.raw.lower()
+        # Concreet bedrag genoemd -> reken het investeringsvoordeel uit.
+        if intent.amount and intent.amount.cents > 0 and \
+                any(w in low for w in ("investe", "aanschaf", "kopen", "koop", "bedrijfsmiddel",
+                                       "machine", "zonnepan", "warmtepomp", "laadpaal")):
+            winst = max(0, totals.get("omzet_cents", 0) - totals.get("kosten_cents", 0)) / 100
+            energy = any(w in low for w in self._ENERGY_WORDS)
+            milieu = any(w in low for w in self._MILIEU_WORDS)
+            benefit = self.optimization.investment_benefit(
+                float(intent.amount.amount), winst, profile.legal_form,
+                energy=energy, milieu=milieu)
+            return Reply(formatters.investerings_voordeel(benefit), "optimization", RiskZone.GROEN)
+        # Anders: de volledige scan + proactieve signalen.
+        ops = self.optimization.scan(profile, totals)
+        alerts = self.optimization.proactive_alerts(profile, totals)
+        return Reply(formatters.optimalisatie_scan(ops, alerts), "optimization", RiskZone.GROEN)
 
     def _cfo(self, intent: Intent, *, tenant_id: str, **_) -> Reply:
         # Een prognose-vraag krijgt een vooruitblik; anders de actuele analyse.

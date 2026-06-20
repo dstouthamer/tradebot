@@ -146,6 +146,39 @@ def test_optimization_scan_is_sector_and_legal():
     assert not any("omzet" in o.titel.lower() and "verlaag" in o.actie.lower() for o in ops)
 
 
+def test_investment_benefit_energy():
+    from boekhouder.agents.optimization import OptimizationAgent
+    from boekhouder.domain import tax_rates
+
+    b = OptimizationAgent().investment_benefit(20_000, winst=50_000,
+                                               legal_form="EENMANSZAAK", energy=True)
+    assert b.kia == round(20_000 * tax_rates.KIA_TARIEF, 2)      # 5.600
+    assert b.eia == round(20_000 * tax_rates.EIA_TARIEF, 2)      # 8.000
+    assert b.extra_aftrek == b.kia + b.eia
+    assert b.btw_terug == round(20_000 * tax_rates.BTW_HOOG, 2)  # 4.200
+    assert 0 < b.belastingbesparing < b.extra_aftrek            # besparing = aftrek * marginaal
+
+
+def test_kia_tiers():
+    from boekhouder.domain import tax_rates
+
+    assert tax_rates.kia_deduction(1_000) == 0.0                 # onder drempel
+    assert tax_rates.kia_deduction(10_000) == 2_800.0           # 28%
+    assert tax_rates.kia_deduction(100_000) == tax_rates.KIA_FLAT  # middenband = vast
+    assert tax_rates.kia_deduction(500_000) == 0.0              # boven max
+
+
+def test_proactive_alerts_year_end():
+    import datetime as _dt
+
+    from boekhouder.agents.optimization import OptimizationAgent
+    from boekhouder.domain.company import CompanyProfile
+
+    prof = CompanyProfile.from_dict({"name": "K", "sector": "HANDEL", "legal_form": "EENMANSZAAK"})
+    q4 = OptimizationAgent().proactive_alerts(prof, {}, today=_dt.date(2026, 11, 15))
+    assert any("31-12" in a for a in q4)                         # jaareinde-signaal in Q4
+
+
 # ----------------------------------------------------------------- fiscal
 def test_fiscal_never_says_safe():
     res = FiscalAgent().run("telefoon zakelijk aftrekken")

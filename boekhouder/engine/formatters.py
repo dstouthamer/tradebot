@@ -8,7 +8,7 @@ from __future__ import annotations
 from boekhouder.agents.cfo import CfoAnalysis
 from boekhouder.agents.fiscal import FiscalAdvice
 from boekhouder.agents.forecast import Forecast
-from boekhouder.agents.optimization import Opportunity
+from boekhouder.agents.optimization import InvestmentBenefit, Opportunity
 from boekhouder.domain.documents import Boeking, Quote, SalesInvoice
 from boekhouder.domain.money import format_eur
 
@@ -85,13 +85,45 @@ def financiele_analyse(a: CfoAnalysis) -> str:
 
 
 # ----------------------- optimalisatie-scan --------------------------- #
-def optimalisatie_scan(ops: list[Opportunity]) -> str:
+def _eur(amount: float) -> str:
+    from boekhouder.domain.money import Money
+
+    return format_eur(Money.euro(amount))
+
+
+def investerings_voordeel(b: InvestmentBenefit) -> str:
+    soort = "EIA (energie)" if b.energy else "MIA (milieu)" if b.milieu else "geen EIA/MIA"
+    lines = [
+        f"Fiscaal voordeel van een investering van {_eur(b.investering)} (excl. btw)",
+        "",
+        f"* KIA (kleinschaligheid): {_eur(b.kia)}",
+    ]
+    if b.eia:
+        lines.append(f"* EIA (energie, ~40%): {_eur(b.eia)}")
+    if b.mia:
+        lines.append(f"* MIA (milieu, tot 45%): {_eur(b.mia)}")
+    lines += [
+        f"* Totale extra aftrek: {_eur(b.extra_aftrek)}",
+        f"* Geschatte belastingbesparing (≈{b.marginaal_tarief*100:.0f}% marginaal): "
+        f"**{_eur(b.belastingbesparing)}**",
+        f"* Btw terugvorderbaar (21%): {_eur(b.btw_terug)}",
+        "",
+        f"Toegepast: {soort}. Indicatief (peiljaar 2026) — EIA/MIA vereisen een "
+        "RVO-melding binnen 3 maanden en het juiste bedrijfsmiddel op de Energie-/Milieulijst.",
+        "Verdedigbaar mits onderbouwd; laat het door je boekhouder/fiscalist toetsen.",
+    ]
+    return "\n".join(lines)
+
+
+def optimalisatie_scan(ops: list[Opportunity], alerts: list[str] | None = None) -> str:
     icon = {"GROEN": "🟢", "ORANJE": "🟠", "ROOD": "🔴"}
     lines = [
         "Legale belastingoptimalisatie — maximaal voordeel binnen de wet",
         "(Ik verlaag je belasting, nooit je opgegeven omzet. Omzet verbergen = fraude.)",
         "",
     ]
+    if alerts:
+        lines += alerts + [""]
     for i, o in enumerate(ops, 1):
         lines.append(f"{i}. {icon.get(o.zone.value, '•')} {o.titel}")
         lines.append(f"   Voordeel: {o.voordeel}")

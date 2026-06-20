@@ -39,6 +39,20 @@ class Opportunity:
     boekhouder_check: bool = False
 
 
+@dataclass(slots=True)
+class InvestmentBenefit:
+    investering: float          # excl. btw (euro)
+    kia: float
+    eia: float
+    mia: float
+    extra_aftrek: float
+    marginaal_tarief: float
+    belastingbesparing: float
+    btw_terug: float
+    energy: bool
+    milieu: bool
+
+
 class OptimizationAgent(BaseAgent):
     name = "optimization"
 
@@ -157,6 +171,47 @@ class OptimizationAgent(BaseAgent):
                 RiskZone.ORANJE, boekhouder_check=True))
 
         return ops
+
+    def investment_benefit(self, investering: float, winst: float, legal_form: str,
+                           *, energy: bool = False, milieu: bool = False) -> InvestmentBenefit:
+        """Reken het concrete fiscale voordeel van één investering uit (indicatief).
+
+        ``investering`` is excl. btw. EIA en MIA gelden niet samen op hetzelfde middel;
+        bij twijfel kiezen we EIA (energie) en anders MIA (milieu).
+        """
+        kia = tax_rates.kia_deduction(investering)
+        eia = tax_rates.eia_deduction(investering) if energy else 0.0
+        mia = tax_rates.mia_deduction(investering) if (milieu and not energy) else 0.0
+        extra = round(kia + eia + mia, 2)
+        rate = tax_rates.marginal_rate(winst, legal_form)
+        besparing = round(extra * rate, 2)
+        btw_terug = round(investering * tax_rates.BTW_HOOG, 2)
+        return InvestmentBenefit(
+            investering=round(investering, 2), kia=kia, eia=eia, mia=mia, extra_aftrek=extra,
+            marginaal_tarief=rate, belastingbesparing=besparing, btw_terug=btw_terug,
+            energy=energy, milieu=milieu)
+
+    def proactive_alerts(self, profile: CompanyProfile, totals: dict,
+                         today: date | None = None) -> list[str]:
+        """Korte, dwingende signalen die de agent uit zichzelf afgeeft."""
+        today = today or date.today()
+        winst = max(0, totals.get("omzet_cents", 0) - totals.get("kosten_cents", 0)) / 100
+        alerts: list[str] = []
+        if today.month >= 10:
+            dagen = (date(today.year, 12, 31) - today).days
+            alerts.append(
+                f"⏰ Nog {dagen} dagen tot 31-12: investeringen en kosten die je dít jaar "
+                "doet, drukken de winst van dit jaar. Plan grote aankopen nu in.")
+        elif today.month <= 2:
+            alerts.append("🗓️ Begin van het jaar: leg je urenregistratie en btw-reservering "
+                          "meteen goed aan — dat scheelt straks werk en belasting.")
+        if profile.legal_form.upper() != "BV" and winst >= _BV_OMSLAG_INDICATIE:
+            alerts.append("📈 Je winst is fors — laat een BV-omslagberekening maken, dat kan "
+                          "vanaf dit niveau honderden tot duizenden euro's schelen.")
+        if any(s in profile.sector.upper() for s in _VERDUURZAAM_SECTOREN):
+            alerts.append("🔋 Verduurzamingsinvestering gepland? Check vóór aanschaf de RVO "
+                          "Energie-/Milieulijst (EIA/MIA) en meld binnen 3 maanden.")
+        return alerts
 
     def run(self, profile: CompanyProfile, totals: dict,
             today: date | None = None) -> AgentResult:

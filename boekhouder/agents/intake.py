@@ -29,6 +29,9 @@ _OPTIMALISATIE_WORDS = ("bespaar belasting", "belasting besparen", "minder belas
                         "optimaliseer", "optimalisatie", "aftrekposten", "fiscaal voordeel",
                         "trucs", "trucjes", "wat kan ik aftrekken", "belasting drukken",
                         "minder betalen", "eia", "mia", "vamil")
+# Investeringen met een bedrag -> concrete voordeel-berekening.
+_INVEST_WORDS = ("investeer", "investering", "investeren", "zonnepanel", "warmtepomp",
+                 "laadpaal", "aanschaf", "aanschaffen", "bedrijfsmiddel", "machine")
 _CFO_WORDS = ("cashflow", "marge", "winst", "omzet", "debiteuren", "liquiditeit",
               "hoeveel btw moet ik betalen", "reservering", "prognose", "prognoses",
               "voorspel", "verwacht", "komende", "vooruit", "forecast",
@@ -116,8 +119,9 @@ class IntakeAgent(BaseAgent):
             return self._sales(IntentType.MAAK_FACTUUR, message, amount, basis, tarief, project)
         if any(w in low for w in _OFFERTE_WORDS):
             return self._sales(IntentType.MAAK_OFFERTE, message, amount, basis, tarief, project)
-        if any(w in low for w in _OPTIMALISATIE_WORDS):
-            return Intent(IntentType.OPTIMALISATIE, message)
+        if any(w in low for w in _OPTIMALISATIE_WORDS) or \
+                (amount is not None and any(w in low for w in _INVEST_WORDS)):
+            return Intent(IntentType.OPTIMALISATIE, message, amount=amount, amount_basis=basis)
         if any(w in low for w in _CFO_WORDS):
             return Intent(IntentType.CFO_ADVIES, message)
         if any(w in low for w in _FISCAAL_WORDS):
