@@ -27,6 +27,14 @@ _KOR_OMZETGRENS = 20_000.0          # kleineondernemersregeling btw
 _BV_OMSLAG_INDICATIE = 100_000.0    # ruwe winstindicatie waarboven BV interessant wordt
 _VERDUURZAAM_SECTOREN = ("INSTALLATIE", "VERDUURZAMING", "ENERGIE", "BOUW")
 
+# Herkenning van investeringen in een bon/boeking.
+INVEST_DREMPEL = 450.0              # vanaf hier meestal een bedrijfsmiddel (afschrijven)
+_ENERGY_KW = ("zonnepan", "warmtepomp", "laadpaal", "isolatie", "zonneboiler", "accu",
+              "warmteterugwin", "hr-ketel", "zonnecollector", "thuisbatterij")
+_MILIEU_KW = ("elektrische", "elektrisch", "recycl", "circulair", "milieu")
+_EQUIP_KW = ("machine", "gereedschap", "laptop", "computer", "inventaris", "bedrijfsmiddel",
+             "apparatuur", "aanhanger", "bestelbus", "steiger", "boormachine")
+
 
 @dataclass(slots=True)
 class Opportunity:
@@ -190,6 +198,17 @@ class OptimizationAgent(BaseAgent):
             investering=round(investering, 2), kia=kia, eia=eia, mia=mia, extra_aftrek=extra,
             marginaal_tarief=rate, belastingbesparing=besparing, btw_terug=btw_terug,
             energy=energy, milieu=milieu)
+
+    @staticmethod
+    def detect_investment(text: str, amount_excl: float) -> tuple[bool, bool, bool]:
+        """Herken of een bon/boeking een investering is → (kandidaat, energie, milieu)."""
+        if amount_excl < INVEST_DREMPEL:
+            return (False, False, False)
+        low = text.lower()
+        energy = any(k in low for k in _ENERGY_KW)
+        milieu = any(k in low for k in _MILIEU_KW)
+        equip = any(k in low for k in _EQUIP_KW)
+        return (energy or milieu or equip, energy, milieu)
 
     def proactive_alerts(self, profile: CompanyProfile, totals: dict,
                          today: date | None = None) -> list[str]:

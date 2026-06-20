@@ -115,6 +115,27 @@ def investerings_voordeel(b: InvestmentBenefit) -> str:
     return "\n".join(lines)
 
 
+def investerings_tip(b: InvestmentBenefit, energy: bool, milieu: bool) -> str:
+    """Korte proactieve tip bij een herkende investering in een bon/boeking."""
+    if b.extra_aftrek > 0:
+        parts = [f"KIA {_eur(b.kia)}"]
+        if b.eia:
+            parts.append(f"EIA {_eur(b.eia)}")
+        if b.mia:
+            parts.append(f"MIA {_eur(b.mia)}")
+        rvo = (" Staat het op de RVO Energie-/Milieulijst? Meld binnen 3 mnd."
+               if (energy or milieu) else "")
+        return (f"💡 Lijkt een investering ({_eur(b.investering)} excl. btw): "
+                f"{' + '.join(parts)} → geschat ~{_eur(b.belastingbesparing)} minder belasting "
+                f"(btw terug {_eur(b.btw_terug)}).{rvo} "
+                f"Typ 'investering {int(b.investering)}' voor de volledige berekening.")
+    if energy or milieu:
+        return ("💡 Lijkt een verduurzamingsaankoop. Onder de aftrekdrempel, maar check de "
+                "RVO-lijst en of afschrijven gunstiger is.")
+    return ("💡 Lijkt een bedrijfsmiddel (>€450): meestal afschrijven over meerdere jaren; "
+            "boven €2.901 aan investeringen dit jaar kan KIA gelden.")
+
+
 def optimalisatie_scan(ops: list[Opportunity], alerts: list[str] | None = None) -> str:
     icon = {"GROEN": "🟢", "ORANJE": "🟠", "ROOD": "🔴"}
     lines = [

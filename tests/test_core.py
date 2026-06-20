@@ -168,6 +168,16 @@ def test_kia_tiers():
     assert tax_rates.kia_deduction(500_000) == 0.0              # boven max
 
 
+def test_detect_investment():
+    from boekhouder.agents.optimization import OptimizationAgent
+
+    det = OptimizationAgent.detect_investment
+    assert det("zonnepanelen SolarTech", 5_000) == (True, True, False)    # energie
+    assert det("boormachine gereedschap", 600) == (True, False, False)   # bedrijfsmiddel
+    assert det("schroeven", 24) == (False, False, False)                 # te klein
+    assert det("kantoorartikelen", 600)[0] is False                      # geen investering
+
+
 def test_proactive_alerts_year_end():
     import datetime as _dt
 
