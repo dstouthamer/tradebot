@@ -1,0 +1,102 @@
+# 🧾 AI Boekhouder — CFO- & fiscale-optimalisatie-agent (NL)
+
+Een Nederlandse AI-boekhoudagent die bonnen en facturen verwerkt, ze koppelt aan
+banktransacties, verkoopfacturen en offertes opstelt via chat, financieel en fiscaal
+advies geeft — en de belastingdruk zo laag mogelijk houdt **binnen de wet**.
+
+> ⚠️ **Veilig by design.** Niets wordt definitief geboekt, verzonden of ingediend
+> zonder jouw expliciete bevestiging. De agent doet **nooit** aan fraude, backdaten,
+> verzonnen kosten, privé-uitgaven als zakelijk, of het verbergen van omzet. Bij twijfel
+> krijg je een legaal alternatief. Dit is geen vervanging voor je boekhouder/fiscalist.
+
+## Wat het doet
+
+| Capability | Status (MVP) |
+|---|---|
+| Intake via chat (WhatsApp-stijl korte commando's) | ✅ |
+| OCR & bonnetjesherkenning (Tesseract + keyless tekst-fallback) | ✅ |
+| Bankkoppeling: CAMT.053 / MT940 / CSV import + matching | ✅ |
+| Conceptboekingen met groen/oranje/rood risico | ✅ |
+| Verkoopfacturen & offertes via chat (concept, bevestiging-gated) | ✅ |
+| Fiscale optimalisatie & CFO-advies (vaste outputformats) | ✅ |
+| Compliance-bewaking (blokkeert fraude, biedt legaal alternatief) | ✅ |
+| Learning rules met versiebeheer + bron | ✅ |
+| Telegram-bot intake (tekst + foto) | ✅ met token |
+| Moneybird concept-facturen + banktransacties | ✅ met token (anders dry-run) |
+| FastAPI backend + Streamlit dashboard + CLI | ✅ runnable |
+| LLM-reasoning via Claude (claude-opus-4-8) | 🧩 seam, aan met API-key |
+
+## Quickstart (geen API-keys nodig — draait keyless)
+
+```bash
+pip install -r requirements.txt
+
+# 1) Deterministische tests
+PYTHONPATH=. python tests/test_core.py        # of: python -m pytest tests/ -q
+
+# 2) Chat in de terminal
+python -m boekhouder.cli
+
+# 3) …of de API
+uvicorn boekhouder.api.main:app --reload      # http://localhost:8000/docs
+
+# 4) …of het dashboard
+streamlit run streamlit_app.py
+```
+
+Voorbeelden in de CLI:
+
+```
+Maak factuur voor De Vries airco montage 1850 ex btw
+Maak offerte hybride warmtepomp Apeldoorn 6500 incl btw
+/bank tests/fixtures/sample_ing.csv
+Bonnetje Gamma project Jansen 124,80 12-06-2026
+Hoeveel btw moet ik betalen dit kwartaal?
+Boek deze prive aankoop als zakelijk        # -> wordt geblokkeerd (rood)
+ja                                          # bevestigt het laatste concept
+```
+
+## Echte integraties aanzetten
+
+Kopieer `.env.example` naar `.env` en vul in wat je wilt gebruiken — alles is optioneel:
+
+```bash
+BOEKHOUDER_TELEGRAM_TOKEN=...     # python -m boekhouder.worker  (long-poll bot)
+BOEKHOUDER_MONEYBIRD_TOKEN=...    # concept-facturen in Moneybird
+BOEKHOUDER_MONEYBIRD_ADMIN_ID=...
+BOEKHOUDER_ANTHROPIC_API_KEY=...  # LLM-reasoning seam (claude-opus-4-8)
+BOEKHOUDER_ALLOW_AUTO_SEND=false  # laat op false tot je echt wilt versturen
+```
+
+## Architectuur
+
+```
+chat / API / Telegram
+        │
+   ┌────▼─────┐  compliance pre-check (blokkeert fraude)
+   │  Router  │──────────────────────────────────────────────┐
+   └────┬─────┘                                               │
+        │ Intake bepaalt intentie                             │
+        ▼                                                     ▼
+  ┌───────────────────────────── agents ─────────────────────────────┐
+  │ OCR · Bank-matching · Boekhoud · Factuur · Offerte · Fiscaal · CFO │
+  │ Learning · Compliance        (allemaal -> AgentResult groen/oranje/rood)
+  └───────────────────────────────────────────────────────────────────┘
+        │                                  │
+   approval gate (geen actie zonder 'ja')  providers (OCR/bank/Moneybird/Telegram/LLM)
+        │                                  │
+   audit log + controlelijst        keyless fallback per provider
+```
+
+Zie [`docs/`](docs/) voor architectuur, agentcontracten, compliance-regels en integraties.
+
+## Herkomst
+
+De architectuur (agentcontract, router-ensemble, pluggable providers met keyless
+fallback, prioriteit-notifier, safe-by-default config, deterministische tests) is
+ontleend aan het Apex-platform dat als bundle in deze repo zat.
+
+## Disclaimer
+
+Educatief/hulpmiddel. Geen fiscaal of juridisch advies. Controleer belangrijke
+beslissingen met je boekhouder of fiscalist.

@@ -1,0 +1,139 @@
+"""Output formatters — the masterprompt's exact Dutch templates (sections 7–11).
+
+Each function takes a produced artefact (from an ``AgentResult.payload``) and renders
+the verbatim template. Numbers come straight from the domain objects, never re-derived.
+"""
+from __future__ import annotations
+
+from boekhouder.agents.cfo import CfoAnalysis
+from boekhouder.agents.fiscal import FiscalAdvice
+from boekhouder.domain.documents import Boeking, Quote, SalesInvoice
+from boekhouder.domain.money import format_eur
+
+
+def _d(value, fmt="%d-%m-%Y") -> str:
+    return value.strftime(fmt) if value else "—"
+
+
+def _ja_nee(value: bool) -> str:
+    return "ja" if value else "nee"
+
+
+# ----------------------------- section 7 ------------------------------- #
+def boekingsvoorstel(b: Boeking, *, bankmatch: str = "—", advies: str = "",
+                     vraag: str = "") -> str:
+    lines = [
+        "Boekingsvoorstel",
+        f"* Leverancier: {b.supplier}",
+        f"* Datum: {_d(b.doc_date)}",
+        f"* Bedrag incl. btw: {format_eur(b.total_incl)}",
+        f"* Btw: {format_eur(b.btw)} ({b.btw_tarief.value}%)",
+        f"* Bedrag excl. btw: {format_eur(b.total_excl)}",
+        f"* Categorie: {b.category}",
+        f"* Project: {b.project or '—'}",
+        f"* Bankmatch: {bankmatch}",
+        f"* Confidence: {b.match_confidence}%",
+        f"* Fiscaal risico: {b.risk_zone.value.lower()}",
+        f"* Advies: {advies or (b.note or 'Klaar om te boeken na bevestiging.')}",
+        f"* Actie nodig: {'boeken' if b.risk_zone.name == 'GROEN' else 'controleren'}",
+        "",
+        "Mijn beoordeling",
+        b.note or "Zakelijk verdedigbaar op basis van het bewijs en de match.",
+    ]
+    if vraag:
+        lines += ["", "Vraag aan gebruiker", vraag]
+    return "\n".join(lines)
+
+
+# ----------------------------- section 8 ------------------------------- #
+def fiscaal_advies(a: FiscalAdvice) -> str:
+    return "\n".join([
+        "Fiscaal advies",
+        f"* Onderwerp: {a.onderwerp}",
+        f"* Mogelijke besparing: {a.besparing}",
+        f"* Voorwaarde: {a.voorwaarde}",
+        f"* Bewijs nodig: {a.bewijs}",
+        f"* Risico: {a.risico}",
+        f"* Boekhouder-check: {_ja_nee(a.boekhouder_check)}",
+        f"* Aanbevolen actie: {a.actie}",
+        "",
+        "Conclusie",
+        a.conclusie,
+    ])
+
+
+# ----------------------------- section 9 ------------------------------- #
+def financiele_analyse(a: CfoAnalysis) -> str:
+    f = a.fin
+    return "\n".join([
+        "Financiële analyse",
+        f"* Omzet deze periode: {format_eur(f.omzet)}",
+        f"* Kosten: {format_eur(f.kosten)}",
+        f"* Brutomarge: {format_eur(f.brutomarge)} ({f.margin_pct:.0f}%)",
+        f"* Nettowinst: {format_eur(f.brutomarge)}",
+        f"* Btw-reservering: {format_eur(f.btw_reservering)}",
+        f"* Openstaande facturen: {format_eur(f.openstaande_facturen)}",
+        f"* Cashflowrisico: {a.cashflow_risk}",
+        f"* Belangrijkste waarschuwing: {a.warning}",
+        f"* Beste actie nu: {a.best_action}",
+        "",
+        "Advies",
+        a.best_action,
+    ])
+
+
+# ----------------------------- section 10 ------------------------------ #
+def factuur(inv: SalesInvoice, company_name: str = "", iban: str = "") -> str:
+    head = [
+        f"CONCEPTFACTUUR {inv.invoice_number or '(nummer volgt)'}",
+        f"Van: {company_name or '—'}",
+        f"Aan: {inv.customer_name}",
+        f"Factuurdatum: {_d(inv.invoice_date)}    Vervaldatum: {_d(inv.due_date)}",
+        "",
+        "Omschrijving                       Aantal   Prijs ex   Btw%    Totaal ex",
+    ]
+    for ln in inv.lines:
+        head.append(
+            f"{ln.description[:34]:<34} {ln.quantity:>6.0f}  "
+            f"{format_eur(ln.unit_price_excl):>9}  {ln.btw_tarief.value:>4}  "
+            f"{format_eur(ln.line_excl):>10}")
+    head += [
+        "",
+        f"Totaal ex btw: {format_eur(inv.total_excl)}",
+        f"Btw:           {format_eur(inv.total_btw)}",
+        f"Totaal incl:   {format_eur(inv.total_incl)}",
+        "",
+        f"Betaalinstructie: voldoe binnen de termijn op {iban or inv.iban or 'IBAN (in te stellen)'}.",
+    ]
+    if inv.project_ref:
+        head.append(f"Projectreferentie: {inv.project_ref}")
+    return "\n".join(head)
+
+
+# ----------------------------- section 11 ------------------------------ #
+def offerte(q: Quote, company_name: str = "") -> str:
+    head = [
+        f"OFFERTE {q.quote_number or '(nummer volgt)'}",
+        f"Van: {company_name or '—'}    Datum: {_d(q.quote_date)}    Geldig tot: {_d(q.valid_until)}",
+        f"Aan: {q.customer_name}",
+        "",
+        f"Projectomschrijving: {q.project_description or '—'}",
+        "",
+        "Werkzaamheden / materialen / arbeid:",
+    ]
+    for ln in q.lines:
+        head.append(f"  - {ln.description}: {format_eur(ln.line_excl)} ex btw")
+    if q.assumptions:
+        head += ["", "Aannames / stelposten:"] + [f"  - {a}" for a in q.assumptions]
+    if q.exclusions:
+        head += ["", "Uitsluitingen:"] + [f"  - {e}" for e in q.exclusions]
+    head += [
+        "",
+        f"Prijs ex btw: {format_eur(q.total_excl)}",
+        f"Btw:          {format_eur(q.total_btw)}",
+        f"Prijs incl:   {format_eur(q.total_incl)}",
+        "",
+        f"Akkoord? Antwoord met 'akkoord' om de opdracht te bevestigen "
+        f"(geldig tot {_d(q.valid_until)}).",
+    ]
+    return "\n".join(head)
