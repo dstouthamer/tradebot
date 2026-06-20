@@ -31,7 +31,8 @@ _TOPICS: list[tuple[tuple[str, ...], FiscalAdvice]] = [
     (("gereedschap", "kopen", "investeer", "investering", "aanschaf"),
      FiscalAdvice(
         onderwerp="Investering in gereedschap/bedrijfsmiddel",
-        besparing="Aftrek van kosten + mogelijk kleinschaligheidsinvesteringsaftrek (KIA); "
+        besparing="Aftrek van kosten + mogelijk kleinschaligheidsinvesteringsaftrek (KIA): "
+                  "in 2026 28% over investeringen tussen €2.901 en €398.236; "
                   "btw terugvorderbaar bij zakelijke aanschaf.",
         voorwaarde="Aantoonbaar zakelijk gebruik en aanschaf vóór jaarafsluiting telt voor dit jaar.",
         bewijs="Factuur op bedrijfsnaam, betaalbewijs, en vastlegging van zakelijk gebruik.",

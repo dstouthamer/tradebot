@@ -165,6 +165,44 @@ def test_api_requires_auth_and_works_with_token():
     assert r.status_code == 200 and r.json()["agent"] == "invoice"
 
 
+def test_db_dialect_rendering():
+    """De DB-laag vertaalt placeholders en DDL per dialect (zonder live server)."""
+    from boekhouder.db import DB
+
+    sq = DB("")  # sqlite
+    assert sq.dialect == "sqlite"
+    assert sq._q("WHERE a=? AND b=?") == "WHERE a=? AND b=?"
+    assert "AUTOINCREMENT" in sq.ddl("id __AUTOPK__")
+
+    # Render-logica voor postgres zonder echt te verbinden.
+    assert DB._q.__get__(_FakePg())("WHERE a=? AND b=?") == "WHERE a=%s AND b=%s"
+    assert "SERIAL PRIMARY KEY" in DB.ddl.__get__(_FakePg())("id __AUTOPK__")
+
+
+class _FakePg:
+    dialect = "postgres"
+    is_postgres = True
+
+
+def test_postgres_backend_optional():
+    """Draait alleen als BOEKHOUDER_TEST_PG_URL is gezet (echte Postgres)."""
+    url = os.environ.get("BOEKHOUDER_TEST_PG_URL")
+    if not url:
+        return  # overslaan zonder server
+    import boekhouder.store as store_mod
+    from boekhouder.config import get_settings
+
+    get_settings().database_url = url
+    store_mod._STORE = None
+    from boekhouder.auth.service import AuthService
+
+    a = AuthService()
+    t1 = a.register("pg1@a.nl", "geheim123", "PG A").tenant_id
+    assert a.login("pg1@a.nl", "geheim123").tenant_id == t1
+    assert store_mod.get_store().next_number("factuur", tenant_id=t1).endswith("-0001")
+    get_settings().database_url = ""
+
+
 def test_web_ui_served_and_oauth_guarded():
     _fresh_store()
     from fastapi.testclient import TestClient

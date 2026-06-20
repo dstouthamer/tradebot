@@ -93,8 +93,14 @@ chat / API / Telegram
    audit log + controlelijst        keyless fallback per provider
 ```
 
-Zie [`docs/`](docs/) voor architectuur, agentcontracten, compliance-regels, integraties
-en [inloggen/multi-tenant](docs/AUTH.md). Hosten: [`deploy/DEPLOY-mijn.host.md`](deploy/DEPLOY-mijn.host.md).
+Zie [`docs/`](docs/) voor architectuur, agentcontracten, compliance-regels, integraties,
+[inloggen/multi-tenant](docs/AUTH.md) en [prognoses & belastingtarieven 2026 met bronnen](docs/PROGNOSE.md).
+Hosten: [`deploy/DEPLOY-mijn.host.md`](deploy/DEPLOY-mijn.host.md).
+
+**Opslag:** standaard sqlite (lokaal/MVP). Voor schaal zet je een Postgres-URL in
+`BOEKHOUDER_DATABASE_URL` — dezelfde code draait op beide. Belastingindicaties zijn
+onderbouwd op peiljaar 2026 (zie bronnen) maar **indicatief** (excl. heffingskortingen);
+laat ze door je fiscalist toetsen.
 
 ## Inloggen & meerdere bedrijven (SaaS)
 

@@ -72,8 +72,22 @@ Zet Nginx ervoor als reverse proxy naar `127.0.0.1:8000` en regel TLS met
 - De administratie staat in sqlite op het volume `boekhouder-data` (Docker) of in
   `BOEKHOUDER_DB_PATH`. **Back-up dit bestand regelmatig** (bijv. dagelijkse `cp` +
   off-site kopie).
-- Voor meer gebruikers/gelijktijdigheid: stap over op PostgreSQL. De store-interface
-  is daarop voorbereid; dat is de schaal-route, niet nodig voor de start.
+## Schalen met PostgreSQL
+
+sqlite is prima om te starten. Voor meer gebruikers/gelijktijdigheid zet je Postgres
+aan — de store draait op beide backends:
+
+```bash
+# 1) psycopg meebouwen: zet de regel `psycopg[binary]` aan in requirements.txt
+# 2) start de meegeleverde Postgres-service:
+docker compose --profile postgres up -d --build
+# 3) wijs de app naar Postgres in .env / compose:
+#    BOEKHOUDER_DATABASE_URL=postgresql://boekhouder:boekhouder@db:5432/boekhouder
+```
+
+Zonder `BOEKHOUDER_DATABASE_URL` blijft het sqlite (bestand op het `boekhouder-data`
+volume). Met een Postgres-URL maakt de app bij de eerste start automatisch de tabellen
+aan. Back-up dan Postgres (bijv. `pg_dump`) i.p.v. het sqlite-bestand.
 
 ## Logins aanzetten
 

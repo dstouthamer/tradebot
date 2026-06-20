@@ -11,10 +11,26 @@ services:
     env_file: .env
     environment:
       BOEKHOUDER_DB_PATH: /data/boekhouder.db
+      # Voor schaal: zet hieronder Postgres aan (en start met --profile postgres).
+      # BOEKHOUDER_DATABASE_URL: postgresql://boekhouder:boekhouder@db:5432/boekhouder
     volumes:
       - boekhouder-data:/data
     expose:
       - "8000"
+
+  # Optioneel: PostgreSQL voor echte schaal. Activeer met:
+  #   docker compose --profile postgres up -d --build
+  # en zet BOEKHOUDER_DATABASE_URL hierboven (en psycopg in requirements aan).
+  db:
+    image: postgres:16
+    profiles: ["postgres"]
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: boekhouder
+      POSTGRES_PASSWORD: boekhouder
+      POSTGRES_DB: boekhouder
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
 
   caddy:
     image: caddy:2
@@ -33,5 +49,6 @@ services:
 
 volumes:
   boekhouder-data:
+  postgres-data:
   caddy-data:
   caddy-config:

@@ -13,14 +13,12 @@ from datetime import date
 
 from boekhouder.agents.base import AgentResult, BaseAgent
 from boekhouder.domain.company import CompanyProfile
+from boekhouder.domain import tax_rates
 from boekhouder.domain.documents import BankTransaction
 from boekhouder.domain.enums import RiskZone
 from boekhouder.domain.money import Money
 
-# Indicatieve tarieven (MVP). Pas aan/laat controleren door je fiscalist.
 _VAT_PERIOD_MONTHS = {"MAAND": 1, "KWARTAAL": 3, "JAAR": 12}
-_INCOME_TAX_INDICATION = 0.30          # grove indicatie effectieve druk eenmanszaak
-_CORP_TAX_LOW_RATE = 0.19              # vpb laag tarief (indicatie)
 
 
 @dataclass(slots=True)
@@ -52,10 +50,11 @@ class ForecastAgent(BaseAgent):
         net_btw = totals.get("omzet_btw_cents", 0) - totals.get("kosten_btw_cents", 0)
         vat_reserve = Money(max(net_btw, 0))
 
-        winst = totals.get("omzet_cents", 0) - totals.get("kosten_cents", 0)
+        winst_cents = totals.get("omzet_cents", 0) - totals.get("kosten_cents", 0)
+        winst_eur = max(winst_cents, 0) / 100
         is_bv = profile.legal_form.upper() == "BV"
-        rate = _CORP_TAX_LOW_RATE if is_bv else _INCOME_TAX_INDICATION
-        tax = Money(int(max(winst, 0) * rate))
+        tax = Money.euro(tax_rates.tax_indication(winst_eur, profile.legal_form))
+        eff = tax_rates.effective_rate(winst_eur, profile.legal_form)
 
         warnings: list[str] = []
         zone = RiskZone.GROEN
@@ -69,18 +68,22 @@ class ForecastAgent(BaseAgent):
             warnings.append("Geen banktransacties geïmporteerd — prognose is grof.")
             zone = RiskZone.ORANJE
 
+        regime = (f"vennootschapsbelasting (19% tot €200.000, 25,8% daarboven) — peiljaar {tax_rates.TAX_YEAR}"
+                  if is_bv else
+                  f"inkomstenbelasting box 1 met zelfstandigenaftrek (€{int(tax_rates.ZELFSTANDIGENAFTREK_2026)}) "
+                  f"en {tax_rates.MKB_WINSTVRIJSTELLING_2026*100:.1f}".replace(".", ",")
+                  + f"% MKB-winstvrijstelling — peiljaar {tax_rates.TAX_YEAR}")
         assumptions = [
             f"Projectie op basis van gemiddelde over {months or 0} maand(en) historie.",
             f"Btw-aangifte per {profile.vat_period.lower()} ({vat_months} mnd).",
-            ("Belastingindicatie met "
-             + (f"vpb {int(_CORP_TAX_LOW_RATE*100)}%" if is_bv
-                else f"~{int(_INCOME_TAX_INDICATION*100)}% effectieve druk eenmanszaak")
-             + " — indicatief, laat je fiscalist meekijken."),
+            f"Belastingindicatie: {regime} (effectief ~{eff*100:.0f}%).",
+            "Heffingskortingen niet meegenomen — werkelijke aanslag valt meestal lager uit; "
+            "laat je fiscalist meekijken.",
         ]
         return Forecast(
             horizon_days=horizon_days, avg_monthly_net=avg_monthly, projected_net=projected,
             current_balance_estimate=Money(net_cents), vat_period_months=vat_months,
-            vat_to_reserve=vat_reserve, profit_estimate=Money(max(winst, 0)),
+            vat_to_reserve=vat_reserve, profit_estimate=Money(max(winst_cents, 0)),
             tax_indication=tax, warnings=warnings, assumptions=assumptions, zone=zone)
 
     @staticmethod

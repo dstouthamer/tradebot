@@ -20,3 +20,5 @@ pandas==2.2.2
 # mt-940==4.30.0
 # Anthropic SDK for the ClaudeLLM seam (claude-opus-4-8).
 # anthropic==0.34.0
+# PostgreSQL backend voor schaal (zet BOEKHOUDER_DATABASE_URL). Zonder dit: sqlite.
+# psycopg[binary]==3.2.1

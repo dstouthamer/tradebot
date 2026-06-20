@@ -49,7 +49,10 @@ class Settings(BaseSettings):
     anthropic_model: str = Field(default="claude-opus-4-8")
 
     # ---- Persistence -----------------------------------------------------
+    # Laat database_url leeg voor sqlite (lokaal/MVP); zet een postgres-URL
+    # (postgresql://user:pass@host:5432/db) voor productie/schaal.
     db_path: str = Field(default="boekhouder.db")
+    database_url: str = Field(default="")
 
     # ---- Auth & multi-tenant --------------------------------------------
     # Zet in productie een lange, willekeurige waarde (tekent sessietokens).
