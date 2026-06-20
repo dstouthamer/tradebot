@@ -41,6 +41,17 @@ class CfoAnalysis:
 class CfoAgent(BaseAgent):
     name = "cfo"
 
+    @staticmethod
+    def financials_from_totals(totals: dict) -> Financials:
+        """Bouw ``Financials`` uit de geaggregeerde store-cijfers."""
+        net_btw = totals.get("omzet_btw_cents", 0) - totals.get("kosten_btw_cents", 0)
+        return Financials(
+            omzet=Money(totals.get("omzet_cents", 0)),
+            kosten=Money(totals.get("kosten_cents", 0)),
+            btw_reservering=Money(max(net_btw, 0)),
+            openstaande_facturen=Money(totals.get("open_cents", 0)),
+        )
+
     def analyse(self, fin: Financials | None) -> CfoAnalysis:
         if fin is None or (fin.omzet.cents == 0 and fin.kosten.cents == 0):
             empty = fin or Financials()

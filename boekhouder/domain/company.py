@@ -20,6 +20,22 @@ class CompanyProfile:
     accountant_contact: str
 
     @classmethod
+    def from_dict(cls, data: dict) -> "CompanyProfile":
+        """Bouw een profiel uit een tenant-record (multi-tenant)."""
+        return cls(
+            name=data.get("name", "Mijn Bedrijf"),
+            legal_form=data.get("legal_form", "EENMANSZAAK"),
+            kvk=data.get("kvk", ""),
+            btw_id=data.get("btw_id", ""),
+            iban=data.get("iban", ""),
+            sector=data.get("sector", "INSTALLATIE"),
+            vat_period=data.get("vat_period", "KWARTAAL"),
+            payment_term_days=int(data.get("payment_term_days", 14)),
+            quote_validity_days=int(data.get("quote_validity_days", 30)),
+            accountant_contact=data.get("accountant_contact", ""),
+        )
+
+    @classmethod
     def from_settings(cls, settings: Settings | None = None) -> "CompanyProfile":
         s = settings or get_settings()
         return cls(

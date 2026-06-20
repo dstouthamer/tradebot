@@ -51,6 +51,21 @@ class Settings(BaseSettings):
     # ---- Persistence -----------------------------------------------------
     db_path: str = Field(default="boekhouder.db")
 
+    # ---- Auth & multi-tenant --------------------------------------------
+    # Zet in productie een lange, willekeurige waarde (tekent sessietokens).
+    secret_key: str = Field(default="")
+    allow_signup: bool = Field(default=True)         # open registratie aan/uit
+    # OAuth (gratis): vul client id/secret om Google/Microsoft-login te activeren.
+    google_client_id: str = Field(default="")
+    google_client_secret: str = Field(default="")
+    microsoft_client_id: str = Field(default="")
+    microsoft_client_secret: str = Field(default="")
+    oauth_redirect_base: str = Field(default="http://localhost:8000")
+    # iDIN (banklogin, betaald): vul de gegevens van je iDIN-broker om te activeren.
+    idin_broker: str = Field(default="")            # bv. signicat | cm | bank
+    idin_client_id: str = Field(default="")
+    idin_client_secret: str = Field(default="")
+
     log_level: str = Field(default="INFO")
 
     # ---- Convenience -----------------------------------------------------
@@ -65,6 +80,18 @@ class Settings(BaseSettings):
     @property
     def has_llm(self) -> bool:
         return bool(self.anthropic_api_key)
+
+    @property
+    def has_google_oauth(self) -> bool:
+        return bool(self.google_client_id and self.google_client_secret)
+
+    @property
+    def has_microsoft_oauth(self) -> bool:
+        return bool(self.microsoft_client_id and self.microsoft_client_secret)
+
+    @property
+    def has_idin(self) -> bool:
+        return bool(self.idin_broker and self.idin_client_id and self.idin_client_secret)
 
 
 @lru_cache

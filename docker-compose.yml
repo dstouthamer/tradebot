@@ -1,0 +1,37 @@
+# AI Boekhouder — productie-stack voor een VPS (bv. bij mijn.host).
+# Caddy regelt automatisch gratis HTTPS (Let's Encrypt) voor je domein.
+#
+#   1) Zet je domein (A-record) naar het IP van je VPS.
+#   2) Vul .env (kopieer van .env.example) — zet zeker BOEKHOUDER_SECRET_KEY.
+#   3) Zet DOMAIN hieronder of in .env, dan:  docker compose up -d --build
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      BOEKHOUDER_DB_PATH: /data/boekhouder.db
+    volumes:
+      - boekhouder-data:/data
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - app
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  boekhouder-data:
+  caddy-data:
+  caddy-config:

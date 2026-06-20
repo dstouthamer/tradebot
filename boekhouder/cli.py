@@ -20,6 +20,7 @@ def _banner() -> str:
         "  Bonnetje Gamma project Jansen warmtepomp 124,80\n"
         "  Maak offerte hybride warmtepomp Apeldoorn 6500 incl btw\n"
         "  Hoeveel btw moet ik betalen dit kwartaal?\n"
+        "  Geef een prognose voor de komende maanden\n"
         "  /bank pad/naar/afschrift.csv\n"
         "  (typ 'quit' om te stoppen)\n"
     )

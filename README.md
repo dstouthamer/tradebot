@@ -13,17 +13,21 @@ advies geeft — en de belastingdruk zo laag mogelijk houdt **binnen de wet**.
 
 | Capability | Status (MVP) |
 |---|---|
+| Inloggen (e-mail+wachtwoord) + multi-tenant (SaaS, data per bedrijf gescheiden) | ✅ |
+| Login met Google/Microsoft (gratis) / iDIN banklogin (betaald) | ✅ stekker via config |
 | Intake via chat (WhatsApp-stijl korte commando's) | ✅ |
 | OCR & bonnetjesherkenning (Tesseract + keyless tekst-fallback) | ✅ |
 | Bankkoppeling: CAMT.053 / MT940 / CSV import + matching | ✅ |
 | Conceptboekingen met groen/oranje/rood risico | ✅ |
 | Verkoopfacturen & offertes via chat (concept, bevestiging-gated) | ✅ |
+| **Prognoses** (cashflow / btw / indicatieve belasting) + CFO-advies | ✅ |
 | Fiscale optimalisatie & CFO-advies (vaste outputformats) | ✅ |
 | Compliance-bewaking (blokkeert fraude, biedt legaal alternatief) | ✅ |
 | Learning rules met versiebeheer + bron | ✅ |
 | Telegram-bot intake (tekst + foto) | ✅ met token |
 | Moneybird concept-facturen + banktransacties | ✅ met token (anders dry-run) |
 | FastAPI backend + Streamlit dashboard + CLI | ✅ runnable |
+| Hosten op een VPS (bv. mijn.host) met Docker + automatische HTTPS | ✅ zie deploy/ |
 | LLM-reasoning via Claude (claude-opus-4-8) | 🧩 seam, aan met API-key |
 
 ## Quickstart (geen API-keys nodig — draait keyless)
@@ -88,7 +92,39 @@ chat / API / Telegram
    audit log + controlelijst        keyless fallback per provider
 ```
 
-Zie [`docs/`](docs/) voor architectuur, agentcontracten, compliance-regels en integraties.
+Zie [`docs/`](docs/) voor architectuur, agentcontracten, compliance-regels, integraties
+en [inloggen/multi-tenant](docs/AUTH.md). Hosten: [`deploy/DEPLOY-mijn.host.md`](deploy/DEPLOY-mijn.host.md).
+
+## Inloggen & meerdere bedrijven (SaaS)
+
+```bash
+# registreer een bedrijf + account, log in, gebruik de API met de token
+curl -X POST localhost:8000/auth/register \
+  -H 'content-type: application/json' \
+  -d '{"email":"jij@bedrijf.nl","password":"geheim123","company_name":"Mijn Bedrijf"}'
+# -> {"token":"...", "tenant_id":"..."}
+curl localhost:8000/bericht -H "Authorization: Bearer <token>" \
+  -H 'content-type: application/json' -d '{"message":"Geef een prognose"}'
+```
+
+E-mail+wachtwoord werkt direct en gratis. Google/Microsoft-login activeer je met
+client-keys in `.env`. **iDIN (banklogin) kan niet gratis** — dat vereist een betaald
+broker-contract; tot die tijd gebruik je e-mail of Google/Microsoft. Details in
+[docs/AUTH.md](docs/AUTH.md).
+
+## Hosten bij mijn.host
+
+Een Python-app heeft een **VPS** nodig (root/SSH) — niet de klassieke shared
+webhosting. Met Docker staat het in een paar commando's live mét gratis HTTPS:
+
+```bash
+cp .env.example .env   # zet BOEKHOUDER_SECRET_KEY!
+export DOMAIN=boekhouder.jouwdomein.nl
+docker compose up -d --build
+```
+
+Volledige stap-voor-stap (incl. pakketkeuze, back-ups, logins): zie
+[`deploy/DEPLOY-mijn.host.md`](deploy/DEPLOY-mijn.host.md).
 
 ## Herkomst
 

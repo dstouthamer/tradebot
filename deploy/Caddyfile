@@ -1,0 +1,6 @@
+# Automatische HTTPS via Let's Encrypt. {$DOMAIN} komt uit de compose-omgeving.
+# Voor lokaal testen: DOMAIN=localhost (Caddy gebruikt dan een self-signed cert).
+{$DOMAIN} {
+	encode gzip
+	reverse_proxy app:8000
+}

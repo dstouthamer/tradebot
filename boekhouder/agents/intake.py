@@ -26,7 +26,9 @@ _BANK_WORDS = ("bankafschrift", "bank import", "importeer bank", "camt", "mt940"
 _FISCAAL_WORDS = ("btw", "aftrek", "aftrekbaar", "fiscaal", "belasting", "investeren",
                   "afschrijv", "kosten mis", "gereedschap kopen", "kopen")
 _CFO_WORDS = ("cashflow", "marge", "winst", "omzet", "debiteuren", "liquiditeit",
-              "hoeveel btw moet ik betalen", "reservering")
+              "hoeveel btw moet ik betalen", "reservering", "prognose", "prognoses",
+              "voorspel", "verwacht", "komende", "vooruit", "forecast",
+              "hoe staat mijn bedrijf", "hoe staat het bedrijf")
 
 
 @dataclass(slots=True)

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from boekhouder.agents.cfo import CfoAnalysis
 from boekhouder.agents.fiscal import FiscalAdvice
+from boekhouder.agents.forecast import Forecast
 from boekhouder.domain.documents import Boeking, Quote, SalesInvoice
 from boekhouder.domain.money import format_eur
 
@@ -80,6 +81,25 @@ def financiele_analyse(a: CfoAnalysis) -> str:
         "Advies",
         a.best_action,
     ])
+
+
+# --------------------------- prognose --------------------------------- #
+def prognose(f: Forecast) -> str:
+    lines = [
+        f"Prognose (komende {f.horizon_days} dagen)",
+        f"* Gem. netto cashflow per maand: {format_eur(f.avg_monthly_net)}",
+        f"* Verwachte netto cashflow {f.horizon_days} dagen: {format_eur(f.projected_net)}",
+        f"* Btw te reserveren (per {f.vat_period_months} mnd): {format_eur(f.vat_to_reserve)}",
+        f"* Geschatte winst tot nu: {format_eur(f.profit_estimate)}",
+        f"* Indicatieve belasting: {format_eur(f.tax_indication)}",
+        "",
+        "Waarschuwingen",
+    ]
+    lines += [f"  - {w}" for w in (f.warnings or ["geen"])]
+    lines += ["", "Aannames"] + [f"  - {a}" for a in f.assumptions]
+    lines += ["", "Advies",
+              "Indicatief — laat belastingcijfers door je boekhouder/fiscalist toetsen."]
+    return "\n".join(lines)
 
 
 # ----------------------------- section 10 ------------------------------ #
