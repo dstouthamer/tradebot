@@ -27,7 +27,7 @@ from boekhouder.store import LOCAL_TENANT, get_store
 
 app = FastAPI(
     title="AI Boekhouder API",
-    version="0.2.0-mvp",
+    version="0.3.0-mvp",
     description="Nederlandse AI-boekhoud-, CFO- en fiscale optimalisatie-agent. "
                 "Multi-tenant, concept-only en bevestiging-gated by design.",
 )
@@ -53,9 +53,12 @@ class BerichtRequest(BaseModel):
 async def home():
     """De web-app: inloggen/registreren + chat, prognoses en bevestigen in de browser."""
     index = _WEB_DIR / "index.html"
+    # no-store: browser toont altijd de nieuwste versie na een update (geen oude cache).
+    no_cache = {"Cache-Control": "no-store, must-revalidate"}
     if index.exists():
-        return HTMLResponse(index.read_text(encoding="utf-8"))
-    return HTMLResponse("<h1>AI Boekhouder</h1><p>Web-UI ontbreekt; gebruik /docs.</p>")
+        return HTMLResponse(index.read_text(encoding="utf-8"), headers=no_cache)
+    return HTMLResponse("<h1>AI Boekhouder</h1><p>Web-UI ontbreekt; gebruik /docs.</p>",
+                        headers=no_cache)
 
 
 @app.get("/health")
@@ -67,6 +70,7 @@ async def health():
 async def config():
     s = get_settings()
     return {
+        "version": app.version,
         "require_confirmation": s.require_confirmation,
         "allow_auto_send": s.allow_auto_send,
         "allow_signup": s.allow_signup,
