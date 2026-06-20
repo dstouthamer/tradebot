@@ -241,6 +241,43 @@ def test_whatsapp_parse_incoming():
     assert msgs[1]["image_id"] == "MID" and msgs[1]["text"] == "bon"
 
 
+def test_vat_return_quarter():
+    _fresh_store()
+    from boekhouder.agents.vat_return import VatReturnAgent
+    from boekhouder.auth.service import AuthService
+    from boekhouder.engine.router import Router
+
+    a = AuthService()
+    t = a.register("v@v.nl", "geheim123", "V").tenant_id
+    r = Router()
+    # factuur (output-btw) + bevestigen zodat hij wordt opgeslagen
+    r.handle("Maak factuur voor Jansen klus 1000 ex btw", session_id="s", tenant_id=t)
+    r.handle("ja", session_id="s", tenant_id=t)
+    import datetime
+    y, q = datetime.date.today().year, (datetime.date.today().month - 1) // 3 + 1
+    fig = r.store.vat_figures(y, q, t)
+    vr = VatReturnAgent().build(fig)
+    assert vr.verschuldigd.cents == 21000        # 21% over €1.000
+    assert vr.saldo.cents == 21000               # geen voorbelasting -> te betalen
+    assert vr.te_betalen
+
+
+def test_email_parse_attachment():
+    from email.message import EmailMessage
+
+    from boekhouder.providers.email_inbox import EmailInbox
+
+    msg = EmailMessage()
+    msg["Subject"] = "Factuur 2026-001"
+    msg.set_content("Zie bijlage")
+    msg.add_attachment(b"%PDF-1.4 fake", maintype="application", subtype="pdf",
+                       filename="factuur.pdf")
+    parsed = EmailInbox.parse_message(msg.as_bytes())
+    assert parsed["subject"] == "Factuur 2026-001"
+    assert len(parsed["attachments"]) == 1
+    assert parsed["attachments"][0][0] == "factuur.pdf"
+
+
 def test_web_ui_served_and_oauth_guarded():
     _fresh_store()
     from fastapi.testclient import TestClient

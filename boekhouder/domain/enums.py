@@ -82,6 +82,7 @@ class IntentType(str, Enum):
     FISCAAL_ADVIES = "fiscaal_advies"
     OPTIMALISATIE = "optimalisatie"    # proactieve legale belastingoptimalisatie-scan
     BTW_BUITENLAND = "btw_buitenland"  # EU-btw / grensoverschrijdende regels
+    BTW_AANGIFTE = "btw_aangifte"      # kwartaalaangifte omzetbelasting
     CFO_ADVIES = "cfo_advies"
     BANK_IMPORT = "bank_import"
     BEVESTIG = "bevestig"          # user confirms a pending concept

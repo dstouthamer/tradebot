@@ -10,7 +10,7 @@ from boekhouder.agents.fiscal import FiscalAdvice
 from boekhouder.agents.forecast import Forecast
 from boekhouder.agents.optimization import InvestmentBenefit, Opportunity
 from boekhouder.domain.documents import Boeking, Quote, SalesInvoice
-from boekhouder.domain.money import format_eur
+from boekhouder.domain.money import Money, format_eur
 
 
 def _d(value, fmt="%d-%m-%Y") -> str:
@@ -182,6 +182,25 @@ def optimalisatie_scan(ops: list[Opportunity], alerts: list[str] | None = None) 
     lines.append("Conclusie: dit is verdedigbaar mits goed onderbouwd. De rode grens "
                  "(omzet verbergen, kosten verzinnen, backdaten) blijft uit.")
     return "\n".join(lines)
+
+
+# --------------------------- btw-aangifte ----------------------------- #
+def btw_aangifte(vr) -> str:
+    richting = "Te betalen aan de Belastingdienst" if vr.te_betalen else "Terug te ontvangen"
+    return "\n".join([
+        f"Btw-aangifte (concept) — Q{vr.quarter} {vr.year}",
+        f"* Omzet (excl. btw): {format_eur(vr.omzet_excl)}",
+        f"* Verschuldigde btw (over je omzet): {format_eur(vr.verschuldigd)}",
+        f"* Voorbelasting (btw op je kosten/inkopen): {format_eur(vr.voorbelasting)}",
+        f"* Saldo: {format_eur(Money(abs(vr.saldo.cents)))} — {richting}",
+        "",
+        "Mijn beoordeling",
+        "Berekend uit je geboekte facturen en boekingen in dit kwartaal. Controleer of "
+        "alle facturen en bonnen verwerkt zijn voordat je indient.",
+        "",
+        "Indienen? Antwoord met 'ja'. Let op: automatisch indienen vereist een ingesteld "
+        "kanaal (Moneybird/Digipoort/eHerkenning); anders dien je de cijfers zelf in.",
+    ])
 
 
 # --------------------------- prognose --------------------------------- #

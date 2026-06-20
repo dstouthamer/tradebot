@@ -92,6 +92,7 @@ class Router:
             IntentType.FISCAAL_ADVIES: self._fiscal,
             IntentType.OPTIMALISATIE: self._optimize,
             IntentType.BTW_BUITENLAND: self._btw_buitenland,
+            IntentType.BTW_AANGIFTE: self._btw_aangifte,
             IntentType.CFO_ADVIES: self._cfo,
         }
         handler = dispatch.get(intent.type, self._unknown)
@@ -192,6 +193,26 @@ class Router:
 
     def _btw_buitenland(self, intent: Intent, **_) -> Reply:
         return Reply(formatters.btw_buitenland(), "btw_buitenland", RiskZone.GROEN)
+
+    def _btw_aangifte(self, intent: Intent, *, session_id: str, tenant_id: str, **_) -> Reply:
+        import re as _re
+
+        from boekhouder.agents.vat_return import VatReturnAgent, current_quarter
+        year, quarter = current_quarter()
+        m = _re.search(r"q([1-4])", intent.raw.lower())          # bv. "btw aangifte Q2"
+        if m:
+            quarter = int(m.group(1))
+        figures = self.store.vat_figures(year, quarter, tenant_id)
+        res = VatReturnAgent().run(figures)
+        vr = res.payload
+        # Indienen is gated: vereist bevestiging én een echt kanaal (allow_auto_send).
+        self.gate.propose(
+            PendingAction(session_id, "btw-aangifte", res.summary, vr, tenant_id=tenant_id,
+                          finalize=lambda: {"dry_run": True,
+                                            "reason": "indienen vereist Moneybird/Digipoort/eHerkenning"}),
+            actor="gebruiker", confidence=res.confidence, proposed_action="btw_aangifte")
+        return Reply(formatters.btw_aangifte(vr), "vat_return", res.risk_zone,
+                     requires_confirmation=True)
 
     _ENERGY_WORDS = ("zonnepanel", "warmtepomp", "laadpaal", "isolatie", "energie",
                      "led", "accu", "zonneboiler", "warmteterugwin")

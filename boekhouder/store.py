@@ -227,6 +227,27 @@ class Store:
             "SELECT * FROM bookings WHERE tenant_id=? ORDER BY id DESC", (tenant_id,))
         return [dict(r) for r in rows]
 
+    def vat_figures(self, year: int, quarter: int, tenant_id: str = LOCAL_TENANT) -> dict:
+        """Btw-cijfers voor een kwartaal: verschuldigd (output) vs voorbelasting (input)."""
+        start = f"{year}-{(quarter - 1) * 3 + 1:02d}-01"
+        end = f"{year}-12-31" if quarter == 4 else f"{year}-{quarter * 3:02d}-31"
+        # Voor de btw telt de factuurdatum (≈ aanmaakmoment ts), niet de vervaldatum.
+        inv = self.db.query_one(
+            "SELECT COALESCE(SUM(btw_cents),0) btw, COALESCE(SUM(excl_cents),0) excl "
+            "FROM invoices WHERE tenant_id=? AND substr(ts,1,10) BETWEEN ? AND ?",
+            (tenant_id, start, end))
+        book = self.db.query_one(
+            "SELECT COALESCE(SUM(btw_cents),0) btw FROM bookings WHERE tenant_id=? AND "
+            "COALESCE(doc_date, substr(ts,1,10)) BETWEEN ? AND ?", (tenant_id, start, end))
+        verschuldigd, voorbelasting = int(inv["btw"]), int(book["btw"])
+        return {
+            "year": year, "quarter": quarter,
+            "omzet_excl_cents": int(inv["excl"]),
+            "verschuldigd_cents": verschuldigd,
+            "voorbelasting_cents": voorbelasting,
+            "saldo_cents": verschuldigd - voorbelasting,   # >0 betalen, <0 terug
+        }
+
     def financial_totals(self, tenant_id: str = LOCAL_TENANT) -> dict:
         """Geaggregeerde cijfers voor CFO-analyse en prognose."""
         inv = self.db.query_one(
