@@ -14,6 +14,8 @@ from boekhouder.engine.router import Router
 def _banner() -> str:
     return (
         "AI Boekhouder — concept-modus (niets wordt definitief zonder jouw 'ja').\n"
+        "Tip: voor de web-app met inloggen draai 'uvicorn boekhouder.api.main:app' "
+        "en open http://localhost:8000/\n"
         "Stuur mij je eerste bon, factuur, banktransactie, offerteverzoek of "
         "factuuropdracht.\nVoorbeelden:\n"
         "  Maak factuur voor De Vries airco montage 1850 ex btw\n"

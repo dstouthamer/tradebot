@@ -165,6 +165,19 @@ def test_api_requires_auth_and_works_with_token():
     assert r.status_code == 200 and r.json()["agent"] == "invoice"
 
 
+def test_web_ui_served_and_oauth_guarded():
+    _fresh_store()
+    from fastapi.testclient import TestClient
+
+    import boekhouder.api.main as main
+    main._router = None
+    c = TestClient(main.app)
+    home = c.get("/")
+    assert home.status_code == 200 and "AI Boekhouder" in home.text and "loginForm" in home.text
+    # OAuth zonder geconfigureerde keys -> nette 400, geen redirect naar provider
+    assert c.get("/auth/google/login", follow_redirects=False).status_code == 400
+
+
 # ------------------------------------------------------------------- runner
 if __name__ == "__main__":
     import traceback

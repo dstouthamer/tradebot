@@ -44,8 +44,9 @@ export DOMAIN=boekhouder.jouwdomein.nl
 docker compose up -d --build
 ```
 
-Klaar: `https://boekhouder.jouwdomein.nl/docs` werkt met een geldig certificaat.
-Gebruikers registreren via `POST /auth/register` en loggen in via `POST /auth/login`.
+Klaar: open `https://boekhouder.jouwdomein.nl/` — daar staat de **web-app** waar
+mensen zich registreren, inloggen, chatten, prognoses opvragen en concepten bevestigen.
+De API-docs staan op `/docs`.
 
 Updaten:
 

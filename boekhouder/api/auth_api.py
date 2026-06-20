@@ -86,11 +86,14 @@ async def oauth_login(provider: str):
 
 @router.get("/{provider}/callback")
 async def oauth_callback(provider: str, code: str = "", state: str = ""):
+    from urllib.parse import quote
+
     email = await _exchange_oauth(provider, code)
     if not email:
         raise HTTPException(400, f"OAuth via {provider} mislukt of niet geconfigureerd.")
     s = _service().login_or_create_external(email, provider=provider)
-    return {"token": s.token, "tenant_id": s.tenant_id, "email": s.email}
+    # Stuur terug naar de web-app, die de token uit de query oppakt.
+    return RedirectResponse(f"/?token={quote(s.token)}&email={quote(s.email)}")
 
 
 async def _exchange_oauth(provider: str, code: str) -> str | None:

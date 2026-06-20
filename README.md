@@ -41,10 +41,11 @@ PYTHONPATH=. python tests/test_core.py        # of: python -m pytest tests/ -q
 # 2) Chat in de terminal
 python -m boekhouder.cli
 
-# 3) …of de API
-uvicorn boekhouder.api.main:app --reload      # http://localhost:8000/docs
+# 3) …of de web-app met inloggen (registreren + chat + prognoses in de browser)
+uvicorn boekhouder.api.main:app --reload      # open http://localhost:8000/
+#                                              # API-docs op http://localhost:8000/docs
 
-# 4) …of het dashboard
+# 4) …of het lokale dashboard
 streamlit run streamlit_app.py
 ```
 

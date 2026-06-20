@@ -9,9 +9,14 @@ Docs: http://localhost:8000/docs
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 from fastapi import Depends, FastAPI, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
+
+_WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
 from boekhouder.api.auth_api import current_session
 from boekhouder.api.auth_api import router as auth_router
@@ -42,6 +47,15 @@ def router() -> Router:
 class BerichtRequest(BaseModel):
     message: str
     session_id: str = "default"
+
+
+@app.get("/", response_class=HTMLResponse)
+async def home():
+    """De web-app: inloggen/registreren + chat, prognoses en bevestigen in de browser."""
+    index = _WEB_DIR / "index.html"
+    if index.exists():
+        return HTMLResponse(index.read_text(encoding="utf-8"))
+    return HTMLResponse("<h1>AI Boekhouder</h1><p>Web-UI ontbreekt; gebruik /docs.</p>")
 
 
 @app.get("/health")
