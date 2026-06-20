@@ -123,6 +123,10 @@ class IntakeAgent(BaseAgent):
             return self._sales(IntentType.MAAK_FACTUUR, message, amount, basis, tarief, project)
         if any(w in low for w in _OFFERTE_WORDS):
             return self._sales(IntentType.MAAK_OFFERTE, message, amount, basis, tarief, project)
+        if any(w in low for w in ("btw aangifte", "btw-aangifte", "kwartaalaangifte",
+                                  "aangifte omzetbelasting", "btw aangeven", "aangifte doen",
+                                  "aangifte indienen", "verstuur aangifte")):
+            return Intent(IntentType.BTW_AANGIFTE, message)
         if any(w in low for w in _BTW_BUITENLAND_WORDS):
             return Intent(IntentType.BTW_BUITENLAND, message)
         if any(w in low for w in _OPTIMALISATIE_WORDS) or \

@@ -37,6 +37,30 @@ Eenmalige setup bij Meta:
 Zonder token is de klasse inert. Eén nummer = één bedrijf (local tenant); voor
 multi-tenant via WhatsApp koppel je later nummers aan tenants.
 
+## 1c. Factuur-mailbox (IMAP) — `providers/email_inbox.py`
+
+Geef een apart e-mailadres op waar alleen facturen binnenkomen; de agent haalt de
+ongelezen berichten op, pakt de bijlagen (pdf/afbeelding) eruit en zet ze als
+conceptboeking klaar.
+
+```bash
+export BOEKHOUDER_IMAP_HOST=imap.gmail.com
+export BOEKHOUDER_IMAP_USER=facturen@klimaatkampioen.nl
+export BOEKHOUDER_IMAP_PASSWORD=<app-wachtwoord>
+python -m boekhouder.mail_fetch          # of elk kwartier via cron
+```
+
+Inert zonder configuratie. Niets wordt definitief geboekt zonder bevestiging.
+
+## 1d. Btw-aangifte (kwartaal)
+
+Typ "doe de btw aangifte" (of "btw aangifte Q2"). De agent berekent de aangifte uit je
+geboekte facturen (verschuldigde btw) en boekingen (voorbelasting) en zet een concept
+klaar. **Indienen** gebeurt alleen na bevestiging én met een echt kanaal: automatische
+indiening bij de Belastingdienst vereist Digipoort/eHerkenning of indiening via je
+boekhoudpakket (bv. Moneybird). Standaard (`allow_auto_send=false`) krijg je de cijfers
+om zelf in te dienen.
+
 ## 2. Moneybird — `providers/moneybird.py`
 
 Echte REST-client. Maakt **alleen concept**-verkoopfacturen (state=draft) en haalt

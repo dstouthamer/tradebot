@@ -48,6 +48,12 @@ class Settings(BaseSettings):
     moneybird_admin_id: str = Field(default="")
     moneybird_base_url: str = Field(default="https://moneybird.com/api/v2")
     ocr_provider: str = Field(default="auto")           # auto | tesseract | stub
+    # Factuur-mailbox (IMAP): een apart adres waar alleen facturen binnenkomen.
+    imap_host: str = Field(default="")
+    imap_user: str = Field(default="")
+    imap_password: str = Field(default="")
+    imap_folder: str = Field(default="INBOX")
+    imap_ssl: bool = Field(default=True)
     anthropic_api_key: str = Field(default="")
     anthropic_model: str = Field(default="claude-opus-4-8")
 
@@ -102,6 +108,10 @@ class Settings(BaseSettings):
     @property
     def has_idin(self) -> bool:
         return bool(self.idin_broker and self.idin_client_id and self.idin_client_secret)
+
+    @property
+    def has_email(self) -> bool:
+        return bool(self.imap_host and self.imap_user and self.imap_password)
 
 
 @lru_cache
