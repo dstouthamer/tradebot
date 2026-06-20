@@ -41,6 +41,9 @@ class Settings(BaseSettings):
 
     # ---- Integrations (blank = keyless fallback) -------------------------
     telegram_token: str = Field(default="")
+    whatsapp_token: str = Field(default="")          # Meta Cloud API access token
+    whatsapp_phone_id: str = Field(default="")       # phone number id
+    whatsapp_verify_token: str = Field(default="")   # zelfgekozen webhook-verify string
     moneybird_token: str = Field(default="")
     moneybird_admin_id: str = Field(default="")
     moneybird_base_url: str = Field(default="https://moneybird.com/api/v2")
@@ -75,6 +78,10 @@ class Settings(BaseSettings):
     @property
     def has_telegram(self) -> bool:
         return bool(self.telegram_token)
+
+    @property
+    def has_whatsapp(self) -> bool:
+        return bool(self.whatsapp_token and self.whatsapp_phone_id)
 
     @property
     def has_moneybird(self) -> bool:

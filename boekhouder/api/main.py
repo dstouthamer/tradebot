@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, UploadFile
+from fastapi import Depends, FastAPI, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel
@@ -71,7 +71,8 @@ async def config():
         "allow_auto_send": s.allow_auto_send,
         "allow_signup": s.allow_signup,
         "integrations": {
-            "telegram": s.has_telegram, "moneybird": s.has_moneybird, "llm": s.has_llm,
+            "telegram": s.has_telegram, "whatsapp": s.has_whatsapp,
+            "moneybird": s.has_moneybird, "llm": s.has_llm,
             "ocr": s.ocr_provider, "google_login": s.has_google_oauth,
             "microsoft_login": s.has_microsoft_oauth, "idin_login": s.has_idin,
         },
@@ -89,20 +90,76 @@ async def bericht(req: BerichtRequest, session: Session = Depends(current_sessio
 
 @app.post("/upload")
 async def upload(file: UploadFile, session_id: str = "default", supplier: str = "",
-                 project: str = "", session: Session = Depends(current_session)):
-    """Upload a bonnetje (image/pdf) or a bank export. Bank files are detected by suffix."""
+                 project: str = "", kind: str = "auto",
+                 session: Session = Depends(current_session)):
+    """Upload een bon (afbeelding/pdf) of een bankexport.
+
+    ``kind``: 'bon' | 'bank' | 'auto'. Bij 'auto' raden we op de bestandsnaam én de
+    inhoud, zodat een bankbestand niet per ongeluk als bonnetje wordt behandeld.
+    """
     content = await file.read()
     name = (file.filename or "").lower()
-    if name.endswith((".xml", ".mt940", ".sta", ".csv", ".940")):
+    text = content.decode("utf-8", errors="replace")
+    looks_bank = (name.endswith((".xml", ".mt940", ".sta", ".csv", ".940"))
+                  or text.lstrip()[:200].lower().startswith("<")
+                  or ":61:" in text[:4000])
+    if kind == "bank" or (kind == "auto" and looks_bank):
         reply = router().handle("importeer bankafschrift", session_id=session_id,
-                                tenant_id=session.tenant_id,
-                                file_content=content.decode("utf-8", errors="replace"))
+                                tenant_id=session.tenant_id, file_content=text)
     else:
         msg = f"bonnetje {supplier} project {project}".strip()
         reply = router().handle(msg, session_id=session_id, tenant_id=session.tenant_id,
                                 image_bytes=content)
     return {"text": reply.text, "agent": reply.agent, "risk_zone": reply.risk_zone.value,
             "requires_confirmation": reply.requires_confirmation}
+
+
+class ProfileRequest(BaseModel):
+    name: str | None = None
+    legal_form: str | None = None
+    kvk: str | None = None
+    btw_id: str | None = None
+    iban: str | None = None
+    sector: str | None = None
+    vat_period: str | None = None
+    payment_term_days: int | None = None
+    quote_validity_days: int | None = None
+    accountant_contact: str | None = None
+
+
+@app.get("/profile")
+async def get_profile(session: Session = Depends(current_session)):
+    return get_store().get_tenant(session.tenant_id) or {}
+
+
+@app.put("/profile")
+async def put_profile(req: ProfileRequest, session: Session = Depends(current_session)):
+    store = get_store()
+    profile = store.get_tenant(session.tenant_id) or {}
+    profile.update({k: v for k, v in req.model_dump().items() if v is not None})
+    store.update_tenant(session.tenant_id, profile)
+    router().invalidate_profile(session.tenant_id)   # nieuwe gegevens meteen actief
+    return {"ok": True, "profile": profile}
+
+
+@app.get("/banktransacties")
+async def banktransacties(session: Session = Depends(current_session)):
+    from boekhouder.domain.money import format_eur
+
+    return [{"datum": t.date.isoformat(), "bedrag": format_eur(t.amount),
+             "cents": t.amount.cents, "tegenpartij": t.counterparty,
+             "omschrijving": t.description, "bron": t.source}
+            for t in get_store().get_bank_txns(session.tenant_id)]
+
+
+@app.get("/facturen")
+async def facturen(session: Session = Depends(current_session)):
+    return get_store().list_invoices(session.tenant_id)
+
+
+@app.get("/boekingen")
+async def boekingen(session: Session = Depends(current_session)):
+    return get_store().list_bookings(session.tenant_id)
 
 
 @app.post("/approve")
@@ -118,6 +175,34 @@ async def controlelijst(session: Session = Depends(current_session)):
 @app.get("/audit")
 async def audit(limit: int = 100, session: Session = Depends(current_session)):
     return get_store().audit_trail(limit, tenant_id=session.tenant_id)
+
+
+@app.get("/whatsapp/webhook")
+async def whatsapp_verify(request: Request):
+    """Meta Cloud API webhook-verificatie (hub.challenge)."""
+    from fastapi.responses import PlainTextResponse
+
+    params = request.query_params
+    if (params.get("hub.mode") == "subscribe"
+            and params.get("hub.verify_token") == get_settings().whatsapp_verify_token
+            and get_settings().whatsapp_verify_token):
+        return PlainTextResponse(params.get("hub.challenge", ""))
+    return PlainTextResponse("verification failed", status_code=403)
+
+
+@app.post("/whatsapp/webhook")
+async def whatsapp_webhook(payload: dict):
+    """Inkomende WhatsApp-berichten (tekst + foto van bonnen) → router → antwoord."""
+    from boekhouder.providers.whatsapp import WhatsAppChannel
+
+    channel = WhatsAppChannel()
+    for msg in WhatsAppChannel.parse_incoming(payload):
+        sender = msg["from"]
+        image_bytes = channel.download_media(msg["image_id"]) if msg["image_id"] else None
+        reply = router().handle(msg["text"], session_id=sender, tenant_id=LOCAL_TENANT,
+                                image_bytes=image_bytes)
+        channel.send(sender, reply.text)
+    return {"ok": True}
 
 
 @app.post("/telegram/webhook")

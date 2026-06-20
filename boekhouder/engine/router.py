@@ -66,6 +66,9 @@ class Router:
                 else CompanyProfile.from_settings(self.settings))
         return self._profiles[tenant_id]
 
+    def invalidate_profile(self, tenant_id: str) -> None:
+        self._profiles.pop(tenant_id, None)
+
     def handle(self, message: str, *, session_id: str = "default",
                tenant_id: str = LOCAL_TENANT,
                image_bytes: bytes | None = None,

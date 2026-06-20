@@ -203,6 +203,44 @@ def test_postgres_backend_optional():
     get_settings().database_url = ""
 
 
+def test_profile_update_and_data_views():
+    _fresh_store()
+    from fastapi.testclient import TestClient
+
+    import boekhouder.api.main as main
+    main._router = None
+    c = TestClient(main.app)
+    tok = c.post("/auth/register", json={"email": "p@q.nl", "password": "geheim123",
+                                         "company_name": "Q"}).json()["token"]
+    h = {"Authorization": f"Bearer {tok}"}
+    # profiel invoeren -> teruglezen
+    assert c.put("/profile", headers=h, json={"iban": "NL00BANK0123456789",
+                                              "legal_form": "BV", "kvk": "12345678"}).status_code == 200
+    assert c.get("/profile", headers=h).json()["iban"] == "NL00BANK0123456789"
+    # bankupload (expliciet) -> zichtbaar via endpoint
+    import os
+    csv = open(os.path.join(os.path.dirname(__file__), "fixtures", "sample_ing.csv")).read()
+    c.post("/upload?kind=bank", headers=h, files={"file": ("x.csv", csv, "text/csv")})
+    assert len(c.get("/banktransacties", headers=h).json()) == 3
+    # factuur bevestigen -> in facturenlijst
+    c.post("/bericht", headers=h, json={"message": "Maak factuur voor Jansen klus 1000 ex btw",
+                                        "session_id": "web"})
+    c.post("/approve?session_id=web", headers=h)
+    assert len(c.get("/facturen", headers=h).json()) == 1
+
+
+def test_whatsapp_parse_incoming():
+    from boekhouder.providers.whatsapp import WhatsAppChannel
+
+    payload = {"entry": [{"changes": [{"value": {"messages": [
+        {"from": "31600", "type": "text", "text": {"body": "hoi"}},
+        {"from": "31600", "type": "image", "image": {"id": "MID", "caption": "bon"}},
+    ]}}]}]}
+    msgs = WhatsAppChannel.parse_incoming(payload)
+    assert msgs[0]["text"] == "hoi" and msgs[0]["image_id"] is None
+    assert msgs[1]["image_id"] == "MID" and msgs[1]["text"] == "bon"
+
+
 def test_web_ui_served_and_oauth_guarded():
     _fresh_store()
     from fastapi.testclient import TestClient

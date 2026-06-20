@@ -16,6 +16,27 @@ python -m boekhouder.worker          # long-poll
 
 Zonder token is de klasse inert (geen netwerk).
 
+## 1b. WhatsApp (intake) — `providers/whatsapp.py`
+
+Via de **Meta WhatsApp Cloud API** (officiële weg; gratis tier). Ontvangt tekst én
+foto's van bonnen en stuurt antwoorden terug.
+
+Eenmalige setup bij Meta:
+1. Maak een **Meta-bedrijfsaccount** + een app met het product *WhatsApp*.
+2. Noteer je **phone number id** en maak een **permanent access token**.
+3. Zet in `.env`: `BOEKHOUDER_WHATSAPP_TOKEN`, `BOEKHOUDER_WHATSAPP_PHONE_ID` en een
+   zelfgekozen `BOEKHOUDER_WHATSAPP_VERIFY_TOKEN`.
+4. Stel in de Meta-app de **webhook** in op `https://<jouwdomein>/whatsapp/webhook` met
+   dezelfde verify-token, en abonneer op `messages`.
+
+```bash
+# Verificatie (Meta doet dit automatisch): GET /whatsapp/webhook?hub.mode=...&hub.challenge=...
+# Inkomend: POST /whatsapp/webhook  -> router -> antwoord in de chat
+```
+
+Zonder token is de klasse inert. Eén nummer = één bedrijf (local tenant); voor
+multi-tenant via WhatsApp koppel je later nummers aan tenants.
+
 ## 2. Moneybird — `providers/moneybird.py`
 
 Echte REST-client. Maakt **alleen concept**-verkoopfacturen (state=draft) en haalt

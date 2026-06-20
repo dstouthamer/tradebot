@@ -214,6 +214,16 @@ class Store:
              inv.total_incl.cents, inv.total_btw.cents, inv.total_excl.cents,
              inv.due_date.isoformat() if inv.due_date else None, status))
 
+    def list_invoices(self, tenant_id: str = LOCAL_TENANT) -> list[dict]:
+        rows = self.db.query(
+            "SELECT * FROM invoices WHERE tenant_id=? ORDER BY id DESC", (tenant_id,))
+        return [dict(r) for r in rows]
+
+    def list_bookings(self, tenant_id: str = LOCAL_TENANT) -> list[dict]:
+        rows = self.db.query(
+            "SELECT * FROM bookings WHERE tenant_id=? ORDER BY id DESC", (tenant_id,))
+        return [dict(r) for r in rows]
+
     def financial_totals(self, tenant_id: str = LOCAL_TENANT) -> dict:
         """Geaggregeerde cijfers voor CFO-analyse en prognose."""
         inv = self.db.query_one(
