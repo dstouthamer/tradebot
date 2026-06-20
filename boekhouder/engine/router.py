@@ -157,6 +157,17 @@ class Router:
             boeking, bankmatch=bankmatch, advies=book_res.advies,
             vraag="Wil je dit boeken?" if book_res.risk_zone == RiskZone.GROEN else
                   f"Aanvullen: {', '.join(book_res.bewijs_nodig)}" if book_res.bewijs_nodig else "")
+        # Herken automatisch een investering → proactieve EIA/MIA/KIA-tip.
+        inv_text = f"{doc.supplier or ''} {doc.description or ''} {doc.category or ''}"
+        cand, energy, milieu = self.optimization.detect_investment(
+            inv_text, float(boeking.total_excl.amount))
+        if cand:
+            totals = self.store.financial_totals(tenant_id)
+            winst = max(0, totals["omzet_cents"] - totals["kosten_cents"]) / 100
+            benefit = self.optimization.investment_benefit(
+                float(boeking.total_excl.amount), winst, self.profile(tenant_id).legal_form,
+                energy=energy, milieu=milieu)
+            text_out += "\n\n" + formatters.investerings_tip(benefit, energy, milieu)
         return Reply(text_out, "bookkeeping", book_res.risk_zone,
                      requires_confirmation=book_res.risk_zone == RiskZone.GROEN)
 
