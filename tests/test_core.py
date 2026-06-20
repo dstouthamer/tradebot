@@ -122,6 +122,30 @@ def test_compliance_allows_normal():
     assert not ComplianceAgent().run("Maak factuur voor Jansen 1000 ex btw").blocked
 
 
+def test_compliance_blocks_underreporting_turnover():
+    ca = ComplianceAgent()
+    assert ca.run("hoe kan ik minder omzet opgeven").blocked
+    assert ca.run("kan ik wat omzet zwart houden").blocked
+    # legale vraag wordt NIET geblokkeerd
+    assert not ca.run("hoe kan ik minder belasting betalen").blocked
+
+
+# ------------------------------------------------------------- optimization
+def test_optimization_scan_is_sector_and_legal():
+    from boekhouder.agents.optimization import OptimizationAgent
+    from boekhouder.domain.company import CompanyProfile
+    from boekhouder.domain.enums import RiskZone
+
+    prof = CompanyProfile.from_dict({"name": "K", "sector": "VERDUURZAMING",
+                                     "legal_form": "EENMANSZAAK"})
+    ops = OptimizationAgent().scan(prof, {"omzet_cents": 8_000_000, "kosten_cents": 2_000_000})
+    titels = " ".join(o.titel.lower() for o in ops)
+    assert "eia" in titels and ("mia" in titels or "vamil" in titels)   # sector-relevant
+    assert any(o.zone == RiskZone.GROEN for o in ops)                   # direct verdedigbaar
+    # geen enkele "kans" verlaagt de omzet — uitsluitend belasting
+    assert not any("omzet" in o.titel.lower() and "verlaag" in o.actie.lower() for o in ops)
+
+
 # ----------------------------------------------------------------- fiscal
 def test_fiscal_never_says_safe():
     res = FiscalAgent().run("telefoon zakelijk aftrekken")

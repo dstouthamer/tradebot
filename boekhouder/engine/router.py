@@ -21,6 +21,7 @@ from boekhouder.agents.forecast import ForecastAgent
 from boekhouder.agents.intake import IntakeAgent, Intent
 from boekhouder.agents.invoice import InvoiceAgent
 from boekhouder.agents.ocr import OcrAgent
+from boekhouder.agents.optimization import OptimizationAgent
 from boekhouder.agents.quote import QuoteAgent
 from boekhouder.config import get_settings
 from boekhouder.domain.company import CompanyProfile
@@ -53,6 +54,7 @@ class Router:
         self.matcher = BankMatchingAgent()
         self.bookkeeper = BookkeepingAgent()
         self.fiscal = FiscalAgent()
+        self.optimization = OptimizationAgent()
         self.cfo = CfoAgent()
         self.forecast = ForecastAgent()
         self.bank_importer = get_bank_importer()
@@ -88,6 +90,7 @@ class Router:
             IntentType.UPLOAD_BON: self._bon,
             IntentType.BANK_IMPORT: self._bank,
             IntentType.FISCAAL_ADVIES: self._fiscal,
+            IntentType.OPTIMALISATIE: self._optimize,
             IntentType.CFO_ADVIES: self._cfo,
         }
         handler = dispatch.get(intent.type, self._unknown)
@@ -175,6 +178,11 @@ class Router:
         res = self.fiscal.run(intent.raw)
         return Reply(formatters.fiscaal_advies(res.payload), "fiscal", res.risk_zone)
 
+    def _optimize(self, intent: Intent, *, tenant_id: str, **_) -> Reply:
+        res = self.optimization.run(self.profile(tenant_id),
+                                    self.store.financial_totals(tenant_id))
+        return Reply(formatters.optimalisatie_scan(res.payload), "optimization", res.risk_zone)
+
     def _cfo(self, intent: Intent, *, tenant_id: str, **_) -> Reply:
         # Een prognose-vraag krijgt een vooruitblik; anders de actuele analyse.
         low = intent.raw.lower()
@@ -183,7 +191,8 @@ class Router:
             res = self.forecast.run(self.store.get_bank_txns(tenant_id),
                                     self.store.financial_totals(tenant_id),
                                     self.profile(tenant_id))
-            return Reply(formatters.prognose(res.payload), "forecast", res.risk_zone)
+            tip = "\n\n💡 Tip: typ 'bespaar belasting' voor een legale optimalisatie-scan."
+            return Reply(formatters.prognose(res.payload) + tip, "forecast", res.risk_zone)
         fin = self.cfo.financials_from_totals(self.store.financial_totals(tenant_id))
         res = self.cfo.run(fin)
         return Reply(formatters.financiele_analyse(res.payload), "cfo", res.risk_zone)
@@ -193,5 +202,6 @@ class Router:
             "Stuur mij je eerste bon, factuur, banktransactie, offerteverzoek of "
             "factuuropdracht. Ik verwerk hem, koppel hem waar mogelijk aan je "
             "administratie en geef direct aan of het fiscaal groen, oranje of rood is. "
-            "Vraag ook gerust om een prognose of fiscaal advies.",
+            "Vraag ook gerust om een prognose, fiscaal advies of typ 'bespaar belasting' "
+            "voor een legale optimalisatie-scan.",
             "intake", RiskZone.GROEN)

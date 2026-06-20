@@ -54,8 +54,20 @@ _RULES: list[ComplianceRule] = [
         re.compile(r"\b(omzet|inkomsten|cash|contant).*(buiten de boek|verberg|niet (aangeven|boeken)|"
                    r"zwart)|\bzwart\b.*\b(omzet|geld)", re.IGNORECASE),
         "Omzet buiten de boeken houden of inkomsten verbergen.",
-        "Alle omzet hoort in de administratie. Ik help je wel met legale winst- en "
-        "btw-planning binnen de regels.",
+        "Alle omzet hoort in de administratie. Ik verlaag wel je belasting legaal: vraag "
+        "'bespaar belasting' voor een optimalisatie-scan (aftrekposten, timing, EIA/MIA, pensioen).",
+    ),
+    ComplianceRule(
+        "omzet_drukken",
+        re.compile(r"(minder|niet alle|deel van de)\s+omzet\s*(op|aan)?gev|"
+                   r"\bomzet\b\s+(niet|minder|lager)\s+(op|aan)?gev|"
+                   r"\bomzet\b\s+(drukken|verlagen)\b.*\bbelasting|"
+                   r"\bwinst\b\s+(wegsluiz|verberg|verdoezel)|"
+                   r"\bfactu(ur|ren)\b.*\bniet\b.*(op|aan)?gev", re.IGNORECASE),
+        "Minder/niet alle omzet opgeven om belasting te drukken.",
+        "Omzet verlagen of weglaten mag niet — dat is fraude. Wel verlagen we je belasting "
+        "legaal: alle aftrekposten, kosten/investeringen timen, EIA/MIA voor verduurzaming, "
+        "pensioen/lijfrente en evt. BV-omslag. Vraag: 'bespaar belasting'.",
     ),
     ComplianceRule(
         "dubbel_boeken",
