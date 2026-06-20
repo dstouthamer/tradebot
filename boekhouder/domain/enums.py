@@ -80,6 +80,7 @@ class IntentType(str, Enum):
     MAAK_FACTUUR = "maak_factuur"
     MAAK_OFFERTE = "maak_offerte"
     FISCAAL_ADVIES = "fiscaal_advies"
+    OPTIMALISATIE = "optimalisatie"    # proactieve legale belastingoptimalisatie-scan
     CFO_ADVIES = "cfo_advies"
     BANK_IMPORT = "bank_import"
     BEVESTIG = "bevestig"          # user confirms a pending concept

@@ -8,6 +8,7 @@ from __future__ import annotations
 from boekhouder.agents.cfo import CfoAnalysis
 from boekhouder.agents.fiscal import FiscalAdvice
 from boekhouder.agents.forecast import Forecast
+from boekhouder.agents.optimization import Opportunity
 from boekhouder.domain.documents import Boeking, Quote, SalesInvoice
 from boekhouder.domain.money import format_eur
 
@@ -81,6 +82,27 @@ def financiele_analyse(a: CfoAnalysis) -> str:
         "Advies",
         a.best_action,
     ])
+
+
+# ----------------------- optimalisatie-scan --------------------------- #
+def optimalisatie_scan(ops: list[Opportunity]) -> str:
+    icon = {"GROEN": "🟢", "ORANJE": "🟠", "ROOD": "🔴"}
+    lines = [
+        "Legale belastingoptimalisatie — maximaal voordeel binnen de wet",
+        "(Ik verlaag je belasting, nooit je opgegeven omzet. Omzet verbergen = fraude.)",
+        "",
+    ]
+    for i, o in enumerate(ops, 1):
+        lines.append(f"{i}. {icon.get(o.zone.value, '•')} {o.titel}")
+        lines.append(f"   Voordeel: {o.voordeel}")
+        lines.append(f"   Voorwaarde: {o.voorwaarde}")
+        lines.append(f"   Risico: {o.risico}")
+        lines.append(f"   Actie: {o.actie}"
+                     + ("  · (boekhouder-check)" if o.boekhouder_check else ""))
+        lines.append("")
+    lines.append("Conclusie: dit is verdedigbaar mits goed onderbouwd. De rode grens "
+                 "(omzet verbergen, kosten verzinnen, backdaten) blijft uit.")
+    return "\n".join(lines)
 
 
 # --------------------------- prognose --------------------------------- #
