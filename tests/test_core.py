@@ -168,6 +168,33 @@ def test_kia_tiers():
     assert tax_rates.kia_deduction(500_000) == 0.0              # boven max
 
 
+def test_grootboek_classification():
+    from boekhouder.domain import grootboek
+
+    # kosten op trefwoord
+    assert grootboek.classify("Shell brandstof").nummer == "4500"
+    assert grootboek.classify("Gamma materialen installatie").nummer == "7000"
+    assert grootboek.classify("KPN telefoon").nummer == "4805"
+    assert grootboek.classify("iets onbekends").nummer == "4900"        # default kosten
+    # investering -> activa (0xxx)
+    z = grootboek.classify("zonnepanelen", is_investment=True, energy=True)
+    assert z.nummer == "0350" and z.soort == "activa"
+    assert grootboek.classify("boormachine", is_investment=True).nummer == "0300"
+
+
+def test_bookkeeping_assigns_grootboek():
+    from boekhouder.agents.bookkeeping import BookkeepingAgent
+    from boekhouder.domain.documents import ExtractedDocument
+    from boekhouder.domain.enums import BtwTarief, EvidenceQuality
+
+    doc = ExtractedDocument(supplier="SolarTech", description="zonnepanelen",
+                            total_incl=Money.euro("6050.00"), btw_tarief=BtwTarief.HOOG,
+                            evidence_quality=EvidenceQuality.HOOG)
+    b = BookkeepingAgent().build(doc)
+    assert b.grootboek == "0350"            # investering -> activa
+    assert b.grootboek_naam.startswith("Zonnepanelen")
+
+
 def test_detect_investment():
     from boekhouder.agents.optimization import OptimizationAgent
 

@@ -8,6 +8,8 @@ from __future__ import annotations
 
 from boekhouder.agents.bank_matching import MatchCandidate
 from boekhouder.agents.base import AgentResult, BaseAgent
+from boekhouder.agents.optimization import OptimizationAgent
+from boekhouder.domain import grootboek
 from boekhouder.domain.documents import Boeking, ExtractedDocument
 from boekhouder.domain.enums import BtwTarief, EvidenceQuality, RiskZone
 from boekhouder.domain.money import Money, btw_from_incl
@@ -20,15 +22,24 @@ class BookkeepingAgent(BaseAgent):
         tarief = doc.btw_tarief or BtwTarief.HOOG
         total = doc.total_incl or Money(0)
         split = btw_from_incl(total, tarief)
+        excl = doc.total_excl or split.excl
         zone, note = self._risk(doc, match)
+
+        # Kies automatisch de juiste grootboekrekening (investering -> activa, anders kosten).
+        text = f"{doc.supplier or ''} {doc.description or ''} {doc.category or ''}"
+        is_inv, energy, _ = OptimizationAgent.detect_investment(text, float(excl.amount))
+        gb = grootboek.classify(text, is_investment=is_inv, energy=energy)
+
         return Boeking(
             supplier=doc.supplier or "onbekend",
             doc_date=doc.doc_date,
             total_incl=total,
             btw=doc.btw_amount or split.btw,
-            total_excl=doc.total_excl or split.excl,
+            total_excl=excl,
             btw_tarief=tarief,
-            category=doc.category or "nog te bepalen",
+            category=doc.category or gb.naam,
+            grootboek=gb.nummer,
+            grootboek_naam=gb.naam,
             project=doc.project,
             payment_status="betaald" if match else "onbekend",
             bank_match_id=(match.transaction.txn_id or None) if match else None,

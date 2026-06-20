@@ -42,7 +42,7 @@ _SCHEMA = [
     "date TEXT, cents INTEGER, counterparty TEXT, iban TEXT, description TEXT, source TEXT)",
     "CREATE TABLE IF NOT EXISTS bookings (id __AUTOPK__, tenant_id TEXT DEFAULT 'local', "
     "ts TEXT, supplier TEXT, doc_date TEXT, incl_cents INTEGER, btw_cents INTEGER, "
-    "excl_cents INTEGER, category TEXT, risk_zone TEXT, definitief INTEGER DEFAULT 0)",
+    "excl_cents INTEGER, category TEXT, grootboek TEXT, risk_zone TEXT, definitief INTEGER DEFAULT 0)",
     "CREATE TABLE IF NOT EXISTS invoices (id __AUTOPK__, tenant_id TEXT DEFAULT 'local', "
     "ts TEXT, number TEXT, customer TEXT, incl_cents INTEGER, btw_cents INTEGER, "
     "excl_cents INTEGER, due_date TEXT, status TEXT DEFAULT 'concept')",
@@ -66,11 +66,13 @@ class Store:
             self.db.execute(self.db.ddl(stmt))
 
     def _migrate(self) -> None:
-        """Voeg tenant_id toe aan tabellen uit oudere DB-versies (idempotent)."""
+        """Voeg ontbrekende kolommen toe aan oudere DB-versies (idempotent)."""
         for table in ("audit", "learning_rules", "controlelijst", "bank_txns"):
             if not self.db.column_exists(table, "tenant_id"):
                 self.db.execute(
                     f"ALTER TABLE {table} ADD COLUMN tenant_id TEXT DEFAULT 'local'")
+        if not self.db.column_exists("bookings", "grootboek"):
+            self.db.execute("ALTER TABLE bookings ADD COLUMN grootboek TEXT")
 
     # ---- tenants & users -------------------------------------------------
     def ensure_tenant(self, tenant_id: str, profile: dict) -> None:
@@ -200,10 +202,11 @@ class Store:
     def save_booking(self, b: Boeking, tenant_id: str = LOCAL_TENANT) -> int:
         return self.db.insert(
             "INSERT INTO bookings(tenant_id, ts, supplier, doc_date, incl_cents, "
-            "btw_cents, excl_cents, category, risk_zone, definitief) VALUES(?,?,?,?,?,?,?,?,?,?)",
+            "btw_cents, excl_cents, category, grootboek, risk_zone, definitief) "
+            "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
             (tenant_id, _now(), b.supplier, b.doc_date.isoformat() if b.doc_date else None,
              b.total_incl.cents, b.btw.cents, b.total_excl.cents, b.category,
-             b.risk_zone.value, int(b.is_definitief)))
+             b.grootboek, b.risk_zone.value, int(b.is_definitief)))
 
     def save_invoice(self, inv: SalesInvoice, tenant_id: str = LOCAL_TENANT,
                      status: str = "concept") -> int:
@@ -230,9 +233,12 @@ class Store:
             "SELECT COALESCE(SUM(excl_cents),0) excl, COALESCE(SUM(btw_cents),0) btw, "
             "COALESCE(SUM(CASE WHEN status!='betaald' THEN incl_cents ELSE 0 END),0) openc "
             "FROM invoices WHERE tenant_id=?", (tenant_id,))
+        # Investeringen (activa-rekeningen 0xxx) zijn geen jaarkosten -> uitsluiten van
+        # de kostentelling (ze worden afgeschreven, niet ineens als kosten geboekt).
         book = self.db.query_one(
             "SELECT COALESCE(SUM(excl_cents),0) excl, COALESCE(SUM(btw_cents),0) btw "
-            "FROM bookings WHERE tenant_id=?", (tenant_id,))
+            "FROM bookings WHERE tenant_id=? AND (grootboek IS NULL OR grootboek NOT LIKE '0%')",
+            (tenant_id,))
         return {
             "omzet_cents": int(inv["excl"]), "omzet_btw_cents": int(inv["btw"]),
             "open_cents": int(inv["openc"]),
