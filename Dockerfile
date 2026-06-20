@@ -4,12 +4,13 @@ FROM python:3.11-slim
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 WORKDIR /app
 
-# Systeem-OCR optioneel: ontcommentarieer om Tesseract (incl. NL) mee te bouwen.
-# RUN apt-get update && apt-get install -y --no-install-recommends \
-#     tesseract-ocr tesseract-ocr-nld && rm -rf /var/lib/apt/lists/*
+# Systeem-OCR: Tesseract (incl. Nederlands) + Poppler voor PDF-facturen.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    tesseract-ocr tesseract-ocr-nld poppler-utils && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt gunicorn
+RUN pip install --no-cache-dir -r requirements.txt gunicorn \
+    pytesseract Pillow pypdf pdf2image
 
 COPY boekhouder ./boekhouder
 COPY streamlit_app.py ./

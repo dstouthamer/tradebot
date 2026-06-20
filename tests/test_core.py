@@ -195,6 +195,23 @@ def test_kia_tiers():
     assert tax_rates.kia_deduction(500_000) == 0.0              # boven max
 
 
+def test_pdf_detection_graceful():
+    from boekhouder.providers.ocr_tesseract import StubOcr, _is_pdf
+
+    assert _is_pdf(b"%PDF-1.7 ...") and not _is_pdf(b"\x89PNG")
+    # zonder OCR-libs mag het niet crashen op een PDF
+    doc = StubOcr().extract(image_bytes=b"%PDF-1.4 onleesbaar")
+    assert doc is not None
+
+
+def test_vat_filing_without_moneybird():
+    from boekhouder.providers.moneybird import MoneybirdProvider
+
+    result = MoneybirdProvider().file_vat_return(None)   # geen token -> dry-run
+    assert result["filed"] is False
+    assert "zelf in" in result["message"].lower() or "geen moneybird" in result["message"].lower()
+
+
 def test_grootboek_classification():
     from boekhouder.domain import grootboek
 

@@ -206,10 +206,16 @@ class Router:
         res = VatReturnAgent().run(figures)
         vr = res.payload
         # Indienen is gated: vereist bevestiging én een echt kanaal (allow_auto_send).
+        from boekhouder.providers.registry import get_bookkeeping
+
+        def _file(vr=vr):
+            result = get_bookkeeping().file_vat_return(vr)
+            result.setdefault("dry_run", not result.get("filed", False))
+            return result
+
         self.gate.propose(
             PendingAction(session_id, "btw-aangifte", res.summary, vr, tenant_id=tenant_id,
-                          finalize=lambda: {"dry_run": True,
-                                            "reason": "indienen vereist Moneybird/Digipoort/eHerkenning"}),
+                          finalize=_file),
             actor="gebruiker", confidence=res.confidence, proposed_action="btw_aangifte")
         return Reply(formatters.btw_aangifte(vr), "vat_return", res.risk_zone,
                      requires_confirmation=True)

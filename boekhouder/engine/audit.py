@@ -76,6 +76,10 @@ class ApprovalGate:
             confirmed_by=confirmed_by, final_id=final_id)
         msg = (f"{action.kind.capitalize()} {final_id or ''} is definitief gemaakt"
                + (" en verzonden." if sent else " (lokaal; externe verzending staat uit)."))
+        if result.get("message"):                       # bv. Moneybird-instructie + link
+            msg += " " + result["message"]
+            if result.get("link"):
+                msg += f" ({result['link']})"
         return {"ok": True, "message": msg.strip(), "final_id": final_id,
                 "sent": sent, "detail": result}
 
