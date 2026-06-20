@@ -102,7 +102,10 @@
         <button onclick="send()">Verstuur</button>
         <button class="secondary" id="confirmBtn" onclick="confirmConcept()" disabled>✅ Bevestig concept</button>
         <label class="secondary" style="display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;width:auto;color:var(--text);font-weight:600;cursor:pointer">
-          📎 Upload bon/bank<input id="file" type="file" style="display:none" onchange="upload()">
+          📎 Upload bon<input id="fileBon" type="file" accept="image/*,.pdf" style="display:none" onchange="upload('bon')">
+        </label>
+        <label class="secondary" style="display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;width:auto;color:var(--text);font-weight:600;cursor:pointer">
+          🏦 Upload bankafschrift<input id="fileBank" type="file" accept=".csv,.xml,.mt940,.sta,.940,.txt" style="display:none" onchange="upload('bank')">
         </label>
       </div>
       <div class="examples row" style="margin-top:10px">
@@ -116,6 +119,48 @@
         <span class="muted" id="agent"></span>
       </div>
       <div class="reply" id="reply" style="margin-top:8px;display:none"></div>
+    </div>
+
+    <div class="card">
+      <details>
+        <summary style="cursor:pointer;font-weight:700">🏢 Bedrijfsgegevens</summary>
+        <div class="grid" style="margin-top:12px">
+          <div><label>Bedrijfsnaam</label><input id="p_name"></div>
+          <div><label>Rechtsvorm</label>
+            <select id="p_legal_form">
+              <option value="EENMANSZAAK">Eenmanszaak</option>
+              <option value="BV">BV</option>
+              <option value="VOF">VOF</option>
+              <option value="ANDERS">Anders</option>
+            </select></div>
+          <div><label>KvK-nummer</label><input id="p_kvk"></div>
+          <div><label>Btw-nummer</label><input id="p_btw_id"></div>
+          <div><label>IBAN</label><input id="p_iban"></div>
+          <div><label>Sector</label><input id="p_sector"></div>
+          <div><label>Btw-aangifte</label>
+            <select id="p_vat_period">
+              <option value="MAAND">Maand</option>
+              <option value="KWARTAAL">Kwartaal</option>
+              <option value="JAAR">Jaar</option>
+            </select></div>
+          <div><label>Betalingstermijn (dagen)</label><input id="p_payment_term_days" type="number"></div>
+          <div><label>Boekhouder/contact</label><input id="p_accountant_contact"></div>
+        </div>
+        <div class="row" style="margin-top:10px;align-items:center">
+          <button onclick="saveProfile()">Opslaan</button>
+          <span class="hint" id="profileMsg"></span>
+        </div>
+      </details>
+    </div>
+
+    <div class="card">
+      <div class="tabs">
+        <button class="active" id="dtBank" onclick="showData('bank')">🏦 Bank</button>
+        <button id="dtInv" onclick="showData('facturen')">🧾 Facturen</button>
+        <button id="dtBook" onclick="showData('boekingen')">📒 Boekingen</button>
+        <button class="secondary" onclick="loadData()" style="margin-left:auto">↻</button>
+      </div>
+      <div id="dataBox"><span class="muted">Laden…</span></div>
     </div>
 
     <div class="grid">
@@ -206,13 +251,57 @@ async function confirmConcept(){
   $("reply").style.display="block"; $("reply").textContent=d.message||JSON.stringify(d);
   $("confirmBtn").disabled=true; loadAudit();
 }
-async function upload(){
-  const f=$("file").files[0]; if(!f) return;
+async function upload(kind){
+  const input = kind==="bank" ? $("fileBank") : $("fileBon");
+  const f=input.files[0]; if(!f) return;
   const fd=new FormData(); fd.append("file",f);
-  const r=await fetch("/upload?session_id=web",{method:"POST",
+  const r=await fetch("/upload?session_id=web&kind="+kind,{method:"POST",
       headers:{"Authorization":"Bearer "+token},body:fd});
   if(r.status===401){ logout(); return; }
-  renderReply(await r.json()); loadControl(); $("file").value="";
+  renderReply(await r.json()); loadControl(); loadData(); input.value="";
+}
+
+// ---- bedrijfsgegevens ----
+const PFIELDS=["name","legal_form","kvk","btw_id","iban","sector","vat_period","payment_term_days","accountant_contact"];
+async function loadProfile(){
+  try{
+    const p=await (await fetch("/profile",{headers:headers(false)})).json();
+    PFIELDS.forEach(k=>{ const el=$("p_"+k); if(el && p[k]!==undefined && p[k]!==null) el.value=p[k]; });
+  }catch(e){}
+}
+async function saveProfile(){
+  const body={}; PFIELDS.forEach(k=>{ const el=$("p_"+k); if(el && el.value!=="") body[k]=el.value; });
+  if(body.payment_term_days) body.payment_term_days=parseInt(body.payment_term_days);
+  const r=await fetch("/profile",{method:"PUT",headers:headers(),body:JSON.stringify(body)});
+  $("profileMsg").textContent = r.ok ? "✓ opgeslagen" : "opslaan mislukt";
+}
+
+// ---- datatabbladen ----
+let dataTab="bank";
+function showData(t){ dataTab=t;
+  $("dtBank").classList.toggle("active",t==="bank");
+  $("dtInv").classList.toggle("active",t==="facturen");
+  $("dtBook").classList.toggle("active",t==="boekingen");
+  loadData();
+}
+function eur(c){ return "€"+(c/100).toLocaleString("nl-NL",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+async function loadData(){
+  const box=$("dataBox"); box.innerHTML='<span class="muted">Laden…</span>';
+  try{
+    if(dataTab==="bank"){
+      const rows=await (await fetch("/banktransacties",{headers:headers(false)})).json();
+      box.innerHTML = rows.length ? rows.map(r=>`<div>${r.datum} · <b>${r.bedrag}</b> · ${r.tegenpartij||""} <span class="muted">${r.omschrijving||""}</span></div>`).join("")
+        : '<span class="muted">Nog geen banktransacties. Upload een bankafschrift (CSV/CAMT/MT940).</span>';
+    } else if(dataTab==="facturen"){
+      const rows=await (await fetch("/facturen",{headers:headers(false)})).json();
+      box.innerHTML = rows.length ? rows.map(r=>`<div>${r.number||"(concept)"} · ${r.customer} · <b>${eur(r.incl_cents)}</b> · <span class="muted">${r.status}</span></div>`).join("")
+        : '<span class="muted">Nog geen facturen.</span>';
+    } else {
+      const rows=await (await fetch("/boekingen",{headers:headers(false)})).json();
+      box.innerHTML = rows.length ? rows.map(r=>`<div>${r.doc_date||""} · ${r.supplier} · <b>${eur(r.incl_cents)}</b> · ${r.category} <span class="zone ${r.risk_zone}">${r.risk_zone}</span></div>`).join("")
+        : '<span class="muted">Nog geen boekingen.</span>';
+    }
+  }catch(e){ box.innerHTML='<span class="muted">Kon data niet laden.</span>'; }
 }
 async function loadControl(){
   try{ const items=await (await fetch("/controlelijst",{headers:headers(false)})).json();
@@ -232,7 +321,7 @@ function render(){
   $("appView").style.display=authed?"block":"none";
   $("logout").style.display=authed?"inline-block":"none";
   $("who").textContent=authed?email:"";
-  if(authed){ loadControl(); loadAudit(); } else { loadMethods(); }
+  if(authed){ loadControl(); loadAudit(); loadProfile(); loadData(); } else { loadMethods(); }
 }
 // OAuth callback levert ?token=... terug -> opslaan.
 (function(){
