@@ -1,0 +1,14 @@
+[Unit]
+Description=Boekhouder FastAPI App
+After=network.target
+
+[Service]
+User=daan
+Group=daan
+WorkingDirectory=/var/www/boekhouder
+Environment="PATH=/var/www/boekhouder/venv/bin"
+ExecStart=/var/www/boekhouder/venv/bin/uvicorn boekhouder.api.main:app --host 127.0.0.1 --port 8000
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
