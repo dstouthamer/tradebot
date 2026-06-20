@@ -76,6 +76,35 @@ def _find_supplier(text: str) -> tuple[str | None, str | None]:
     return None, None
 
 
+def pdf_to_text(pdf_bytes: bytes) -> str:
+    """Lees tekst uit een PDF: eerst directe tekstextractie (pypdf), anders OCR
+    (pdf2image + Tesseract). Beide afhankelijkheden zijn optioneel."""
+    try:
+        import io
+
+        from pypdf import PdfReader
+
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+        text = "\n".join((page.extract_text() or "") for page in reader.pages)
+        if text.strip():
+            return text
+    except Exception as exc:  # noqa: BLE001
+        log.debug("pypdf tekstextractie mislukt: %s", exc)
+    try:
+        import pytesseract
+        from pdf2image import convert_from_bytes
+
+        images = convert_from_bytes(pdf_bytes, dpi=200)
+        return "\n".join(pytesseract.image_to_string(im, lang="nld+eng") for im in images)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("PDF-OCR mislukt (pdf2image/tesseract): %s", exc)
+        return ""
+
+
+def _is_pdf(data: bytes | None) -> bool:
+    return bool(data) and data[:5] == b"%PDF-"
+
+
 def parse_text(text: str, source_ref: str | None = None) -> ExtractedDocument:
     """Deterministic regex extraction — shared by both providers."""
     supplier, category = _find_supplier(text)
@@ -120,6 +149,9 @@ class StubOcr(OcrProvider):
     name = "stub"
 
     def extract(self, *, text=None, image_bytes=None, source_ref=None) -> ExtractedDocument:
+        if not text and _is_pdf(image_bytes):
+            # Tekst-PDF's lezen we ook zonder Tesseract (via pypdf).
+            text = pdf_to_text(image_bytes)
         if not text and image_bytes:
             # No real OCR available: record low evidence, ask for a better photo.
             doc = ExtractedDocument(source_ref=source_ref, evidence_quality=EvidenceQuality.LAAG)
@@ -132,7 +164,9 @@ class TesseractOcr(OcrProvider):
     name = "tesseract"
 
     def extract(self, *, text=None, image_bytes=None, source_ref=None) -> ExtractedDocument:
-        if image_bytes:
+        if not text and _is_pdf(image_bytes):
+            text = pdf_to_text(image_bytes)
+        elif not text and image_bytes:
             try:
                 import io
 

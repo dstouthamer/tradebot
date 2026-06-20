@@ -38,6 +38,9 @@ class BookkeepingProvider:
     def create_concept_sales_invoice(self, invoice: SalesInvoice) -> dict:
         raise NotImplementedError(f"{self.name} cannot create invoices")
 
+    def file_vat_return(self, vat_return) -> dict:
+        raise NotImplementedError(f"{self.name} cannot file VAT returns")
+
 
 class ChatChannel:
     """An inbound/outbound chat channel (Telegram, …)."""

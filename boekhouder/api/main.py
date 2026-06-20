@@ -76,7 +76,7 @@ async def config():
         "allow_signup": s.allow_signup,
         "integrations": {
             "telegram": s.has_telegram, "whatsapp": s.has_whatsapp,
-            "moneybird": s.has_moneybird, "llm": s.has_llm,
+            "moneybird": s.has_moneybird, "email_inbox": s.has_email, "llm": s.has_llm,
             "ocr": s.ocr_provider, "google_login": s.has_google_oauth,
             "microsoft_login": s.has_microsoft_oauth, "idin_login": s.has_idin,
         },

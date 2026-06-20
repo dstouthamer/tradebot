@@ -194,6 +194,12 @@ def btw_aangifte(vr) -> str:
         f"* Voorbelasting (btw op je kosten/inkopen): {format_eur(vr.voorbelasting)}",
         f"* Saldo: {format_eur(Money(abs(vr.saldo.cents)))} — {richting}",
         "",
+        "Officiële rubrieken (aangifte omzetbelasting):",
+        f"  1a/1b — verschuldigde btw: {format_eur(vr.verschuldigd)}",
+        f"  5b — voorbelasting: {format_eur(vr.voorbelasting)}",
+        f"  5g — saldo {('te betalen' if vr.te_betalen else 'terug te ontvangen')}: "
+        f"{format_eur(Money(abs(vr.saldo.cents)))}",
+        "",
         "Mijn beoordeling",
         "Berekend uit je geboekte facturen en boekingen in dit kwartaal. Controleer of "
         "alle facturen en bonnen verwerkt zijn voordat je indient.",

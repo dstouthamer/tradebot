@@ -68,6 +68,24 @@ class MoneybirdProvider(BookkeepingProvider):
             log.warning("Moneybird create failed (%s); returning local concept", exc)
             return {"dry_run": True, "error": str(exc), "would_post": payload}
 
+    def file_vat_return(self, vat_return) -> dict:
+        """Btw-aangifte richting Moneybird.
+
+        Moneybird is geregistreerd intermediair en dient de btw bij de Belastingdienst in;
+        de publieke API biedt geen kant-en-klaar 'verzend'-endpoint. We zorgen dat de data
+        in Moneybird staat en geven de directe link om daar te controleren en in te dienen.
+        Eerlijk: de laatste indien-actie/controle ligt bij jou (of bij Digipoort/eHerkenning).
+        """
+        if self.dry_run:
+            return {"filed": False, "channel": "geen",
+                    "message": "Geen Moneybird-koppeling. Dien de cijfers zelf in via "
+                               "Mijn Belastingdienst Zakelijk, of koppel Moneybird/Digipoort."}
+        admin = self.settings.moneybird_admin_id
+        return {"filed": False, "channel": "moneybird",
+                "message": "De gegevens staan in Moneybird. Controleer en dien de "
+                           "btw-aangifte in via Moneybird (Belastingen ▸ Btw-aangifte).",
+                "link": f"https://moneybird.com/{admin}/tax_reports"}
+
     def list_bank_transactions(self) -> list[BankTransaction]:
         if self.dry_run:
             return []
