@@ -39,6 +39,15 @@ MKB_WINSTVRIJSTELLING_2026 = 0.127      # 12,7% (ongewijzigd t.o.v. 2025)
 KIA_MIN_INVESTERING = 2_901.0
 KIA_MAX_INVESTERING = 398_236.0
 KIA_TARIEF = 0.28                       # 28% in de eerste band
+KIA_BAND1_TOP = 70_602.0                # tot hier 28%
+KIA_FLAT = 19_769.0                     # vast maximumbedrag in de middenband (indicatief)
+KIA_BAND2_TOP = 130_745.0               # daarboven afbouw
+KIA_AFBOUW = 0.0756                     # afbouwpercentage boven band 2
+
+# ---- Energie-/Milieu-investeringsaftrek (RVO) 2026 — indicatief ----------
+EIA_TARIEF = 0.40                       # ~40% extra aftrek (Energielijst)
+EIA_DREMPEL = 2_800.0
+MIA_TARIEF_MAX = 0.45                   # tot 45% (Milieulijst), categorie-afhankelijk
 
 # ---- Vennootschapsbelasting (BV) 2026 ------------------------------------
 VPB_GRENS = 200_000.0
@@ -91,3 +100,40 @@ def tax_indication(winst: float, legal_form: str) -> float:
 
 def effective_rate(winst: float, legal_form: str) -> float:
     return tax_indication(winst, legal_form) / winst if winst > 0 else 0.0
+
+
+# ---- Investeringsaftrek-berekeningen (indicatief) ------------------------
+def kia_deduction(investering: float) -> float:
+    """Kleinschaligheidsinvesteringsaftrek over één jaar-investeringsbedrag."""
+    i = investering
+    if i < KIA_MIN_INVESTERING or i > KIA_MAX_INVESTERING:
+        return 0.0
+    if i <= KIA_BAND1_TOP:
+        return round(i * KIA_TARIEF, 2)
+    if i <= KIA_BAND2_TOP:
+        return KIA_FLAT
+    return max(0.0, round(KIA_FLAT - KIA_AFBOUW * (i - KIA_BAND2_TOP), 2))
+
+
+def eia_deduction(investering: float) -> float:
+    """Energie-investeringsaftrek (alleen voor bedrijfsmiddelen op de Energielijst)."""
+    return round(investering * EIA_TARIEF, 2) if investering >= EIA_DREMPEL else 0.0
+
+
+def mia_deduction(investering: float) -> float:
+    """Milieu-investeringsaftrek (max-tarief; categorie-afhankelijk)."""
+    return round(investering * MIA_TARIEF_MAX, 2) if investering >= EIA_DREMPEL else 0.0
+
+
+def marginal_rate(winst: float, legal_form: str) -> float:
+    """Het tarief waartegen één euro extra aftrek effectief voordeel oplevert."""
+    if legal_form.upper() == "BV":
+        return VPB_HOOG if winst > VPB_GRENS else VPB_LAAG
+    belastbaar = max(0.0, winst - ZELFSTANDIGENAFTREK_2026) * (1 - MKB_WINSTVRIJSTELLING_2026)
+    rate = BOX1_BRACKETS_2026[-1][1]
+    for upper, r in BOX1_BRACKETS_2026:
+        if belastbaar <= upper:
+            rate = r
+            break
+    # Aftrek werkt bij een IB-ondernemer door de MKB-winstvrijstelling heen.
+    return round(rate * (1 - MKB_WINSTVRIJSTELLING_2026), 4)

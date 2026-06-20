@@ -27,8 +27,27 @@ geprioriteerde lijst kansen — sector-, winst- en seizoensbewust:
 Voor jouw sector (verduurzaming/installatie) is **EIA/MIA/Vamil** vaak het grootste,
 volledig legale voordeel.
 
+## Concrete bedragen bij een investering
+
+Noem een bedrag, dan rekent de agent het voordeel uit. Bijv. *"ik wil investeren in
+zonnepanelen voor 20000"*:
+
+```
+Fiscaal voordeel van een investering van €20.000,00 (excl. btw)
+* KIA: €5.600,00   * EIA (energie, ~40%): €8.000,00
+* Totale extra aftrek: €13.600,00
+* Geschatte belastingbesparing (≈31% marginaal): €4.239,12
+* Btw terugvorderbaar (21%): €4.200,00
+```
+
+KIA is getrapt, EIA/MIA gelden niet samen op hetzelfde middel, en de besparing rekent
+met je marginale tarief (eenmanszaak via de MKB-winstvrijstelling, of vpb bij een BV).
+
 ## Proactief
 
+- De agent geeft **uit zichzelf** signalen via `proactive_alerts`: jaareinde-timing
+  ("nog X dagen tot 31-12 — investeer dit jaar nog"), BV-omslag bij hoge winst, en een
+  RVO-reminder voor verduurzamingsinvesteringen.
 - De **prognose** sluit af met een tip om de scan te draaien.
 - Onderwerpen met 🟠 dragen altijd "boekhouder-check"; bedragen/regelingen zijn
   indicatief (peiljaar 2026) — laat ze door je fiscalist toetsen.
