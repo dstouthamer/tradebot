@@ -298,7 +298,7 @@ async function loadData(){
         : '<span class="muted">Nog geen facturen.</span>';
     } else {
       const rows=await (await fetch("/boekingen",{headers:headers(false)})).json();
-      box.innerHTML = rows.length ? rows.map(r=>`<div>${r.doc_date||""} · ${r.supplier} · <b>${eur(r.incl_cents)}</b> · ${r.category} <span class="zone ${r.risk_zone}">${r.risk_zone}</span></div>`).join("")
+      box.innerHTML = rows.length ? rows.map(r=>`<div>${r.doc_date||""} · ${r.supplier} · <b>${eur(r.incl_cents)}</b> · <span class="muted">grb ${r.grootboek||"?"}</span> ${r.category} <span class="zone ${r.risk_zone}">${r.risk_zone}</span></div>`).join("")
         : '<span class="muted">Nog geen boekingen.</span>';
     }
   }catch(e){ box.innerHTML='<span class="muted">Kon data niet laden.</span>'; }

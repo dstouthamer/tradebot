@@ -153,6 +153,8 @@ class Boeking:
     total_excl: Money
     btw_tarief: BtwTarief
     category: str
+    grootboek: str = ""                  # grootboekrekeningnummer (bv. 7000)
+    grootboek_naam: str = ""             # bv. "Inkoopwaarde / materialen"
     project: str | None = None
     payment_status: str = "onbekend"
     bank_match_id: str | None = None
