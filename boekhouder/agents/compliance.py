@@ -70,6 +70,19 @@ _RULES: list[ComplianceRule] = [
         "pensioen/lijfrente en evt. BV-omslag. Vraag: 'bespaar belasting'.",
     ),
     ComplianceRule(
+        "schijnconstructie",
+        re.compile(r"(brievenbus|schijnconstruct|offshore)|"
+                   r"\b(omzet|winst|bedrijf|bv|firma|onderneming)\b.{0,40}"
+                   r"\b(bulgarije|cyprus|malta|dubai|ierland|luxemburg|estland|buitenland)\b"
+                   r".{0,40}(btw|belasting|ontwijk|ontduik|minder)|"
+                   r"\bbelasting\b\s*(ontwijk|ontduik)|"
+                   r"\b(verplaats|sluis)\b.{0,30}\b(omzet|winst)\b", re.IGNORECASE),
+        "Schijnconstructie / omzet of winst kunstmatig naar een laag-belastingland verplaatsen.",
+        "Zonder echte activiteit (substance) in dat land is dit een schijnconstructie — "
+        "verboden onder anti-misbruikregels. Wel legaal: echte grensoverschrijdende handel "
+        "met de juiste btw-regels. Vraag 'btw buitenland' of 'bespaar belasting'.",
+    ),
+    ComplianceRule(
         "dubbel_boeken",
         re.compile(r"\b(dubbel|twee keer|2x)\s+(boek|aftrek|declareer)", re.IGNORECASE),
         "Dezelfde kosten dubbel boeken.",
