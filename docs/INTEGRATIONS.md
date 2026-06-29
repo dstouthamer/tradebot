@@ -106,3 +106,35 @@ Formaat wordt automatisch gedetecteerd (`fmt="auto"`).
 `RuleBasedLLM` (default, offline) of `ClaudeLLM` met
 `BOEKHOUDER_ANTHROPIC_API_KEY` (model `claude-opus-4-8`, vereist `pip install
 anthropic`). Alleen voor vrije tekst, nooit voor bedragen.
+
+## 6. Obsidian-export — `providers/obsidian.py`
+
+Schrijf je boekhouding als **Markdown-notities** naar een lokale
+[Obsidian](https://obsidian.md)-vault, zodat je facturen, boekingen en banktransacties
+naast je eigen aantekeningen kunt teruglezen, doorzoeken en linken. Elke notitie krijgt
+YAML-frontmatter (`type`, bedragen, datum) + tags (`#boekhouding`, `#factuur`, …) zodat
+Obsidian-zoekopdrachten en Dataview erop werken. Er wordt ook een index-notitie
+`Boekhouding.md` met een financieel overzicht geschreven.
+
+```bash
+export BOEKHOUDER_OBSIDIAN_VAULT="/Users/jij/Obsidian/Werk"
+export BOEKHOUDER_OBSIDIAN_FOLDER="Boekhouding"   # submap in de vault (default)
+# in de CLI:
+python -m boekhouder.cli
+» /obsidian
+```
+
+Structuur in de vault:
+
+```
+<vault>/Boekhouding/
+  Boekhouding.md          # index + financieel overzicht
+  Facturen/               # één notitie per verkoopfactuur
+  Boekingen/              # één notitie per boeking
+  Bank/                   # één notitie per banktransactie
+```
+
+**Veilig & keyless.** Zonder `BOEKHOUDER_OBSIDIAN_VAULT` is de provider inert. Hij
+schrijft **uitsluitend lokale Markdown-bestanden** in de gekozen vault-map — geen
+netwerk, niets wordt verzonden of definitief geboekt. De render-functies zijn puur en
+zonder bestandssysteem testbaar.

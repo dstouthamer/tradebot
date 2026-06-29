@@ -2,7 +2,8 @@
 
 Run:  python -m boekhouder.cli
 Type a message like the masterprompt examples; type 'quit' to exit. A bank export can
-be loaded with:  /bank <path-to-file>
+be loaded with:  /bank <path-to-file>. Export your bookkeeping to an Obsidian vault
+with:  /obsidian
 """
 from __future__ import annotations
 
@@ -24,8 +25,16 @@ def _banner() -> str:
         "  Hoeveel btw moet ik betalen dit kwartaal?\n"
         "  Geef een prognose voor de komende maanden\n"
         "  /bank pad/naar/afschrift.csv\n"
+        "  /obsidian   (exporteer je boekhouding als notities naar je Obsidian-vault)\n"
         "  (typ 'quit' om te stoppen)\n"
     )
+
+
+def _export_obsidian() -> str:
+    from boekhouder.providers.registry import get_obsidian
+    from boekhouder.store import get_store
+
+    return get_obsidian().export(get_store())["message"]
 
 
 def main() -> None:
@@ -41,6 +50,9 @@ def main() -> None:
             continue
         if msg.lower() in ("quit", "exit", "stop"):
             break
+        if msg.lower().split()[0] == "/obsidian":
+            print(f"\n{_export_obsidian()}\n")
+            continue
         file_content = None
         if msg.startswith("/bank "):
             path = msg[len("/bank "):].strip()

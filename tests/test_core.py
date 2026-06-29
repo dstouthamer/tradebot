@@ -331,6 +331,79 @@ def test_router_confirmation_flow():
     os.remove(path)
 
 
+# --------------------------------------------------------------- obsidian
+def test_obsidian_render_invoice():
+    from boekhouder.providers.obsidian import render_invoice
+
+    fn, content = render_invoice({
+        "id": 1, "number": "F2026-0001", "customer": "De Vries",
+        "ts": "2026-06-12T10:00:00+00:00", "due_date": "2026-06-26",
+        "incl_cents": 223850, "btw_cents": 38850, "excl_cents": 185000,
+        "status": "concept"})
+    assert fn.endswith(".md") and "F2026-0001" in fn
+    assert content.startswith("---")                 # YAML frontmatter
+    assert "type: verkoopfactuur" in content
+    assert "€2.238,50" in content                    # Nederlandse euro-notatie
+    assert "- boekhouding" in content and "- factuur" in content   # tags
+
+
+def test_obsidian_render_bank_txn_sign():
+    from boekhouder.providers.obsidian import render_bank_txn
+
+    txn = BankTransaction(date=date(2026, 6, 13), amount=Money.euro("-124.80"),
+                          counterparty="Gamma Apeldoorn", source="csv", txn_id="t1")
+    fn, content = render_bank_txn(txn)
+    assert fn.endswith(".md")
+    assert "Gamma Apeldoorn" in content and "-€124,80" in content
+    assert "richting: af" in content
+
+
+def test_obsidian_inert_without_vault():
+    from boekhouder.config import get_settings
+    from boekhouder.providers.obsidian import ObsidianVault
+
+    s = get_settings()
+    saved = s.obsidian_vault
+    s.obsidian_vault = ""
+    try:
+        result = ObsidianVault().export(store=None)   # store is nooit aangeraakt
+        assert result["enabled"] is False and result["written"] == 0
+    finally:
+        s.obsidian_vault = saved
+
+
+def test_obsidian_export_writes_vault():
+    import shutil
+
+    import boekhouder.store as store_mod
+    from boekhouder.config import get_settings
+    from boekhouder.providers.obsidian import ObsidianVault
+
+    fd, dbpath = tempfile.mkstemp(suffix=".db")
+    os.close(fd)
+    vault = tempfile.mkdtemp(prefix="vault-")
+    s = get_settings()
+    s.db_path = dbpath
+    s.obsidian_vault = vault
+    s.obsidian_folder = "Boekhouding"
+    store_mod._STORE = None
+    try:
+        store = store_mod.get_store()
+        store.save_bank_txns([BankTransaction(
+            date=date(2026, 6, 13), amount=Money.euro("-124.80"),
+            counterparty="Gamma", source="csv", txn_id="t1")])
+        result = ObsidianVault().export(store)
+        assert result["enabled"] and result["written"] >= 2        # 1 bank + index
+        base = os.path.join(vault, "Boekhouding")
+        assert os.path.exists(os.path.join(base, "Boekhouding.md"))
+        assert os.listdir(os.path.join(base, "Bank"))              # ten minste 1 notitie
+    finally:
+        s.obsidian_vault = ""
+        store_mod._STORE = None
+        os.remove(dbpath)
+        shutil.rmtree(vault, ignore_errors=True)
+
+
 # ------------------------------------------------------------------- runner
 if __name__ == "__main__":
     import traceback

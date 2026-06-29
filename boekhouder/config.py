@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     imap_password: str = Field(default="")
     imap_folder: str = Field(default="INBOX")
     imap_ssl: bool = Field(default=True)
+    # Obsidian-export: pad naar een lokale Obsidian-vault (leeg = uit). Schrijft
+    # uitsluitend lokale Markdown-bestanden — geen netwerk, niets wordt verzonden.
+    obsidian_vault: str = Field(default="")
+    obsidian_folder: str = Field(default="Boekhouding")   # submap in de vault
     anthropic_api_key: str = Field(default="")
     anthropic_model: str = Field(default="claude-opus-4-8")
 
@@ -112,6 +116,10 @@ class Settings(BaseSettings):
     @property
     def has_email(self) -> bool:
         return bool(self.imap_host and self.imap_user and self.imap_password)
+
+    @property
+    def has_obsidian(self) -> bool:
+        return bool(self.obsidian_vault)
 
 
 @lru_cache

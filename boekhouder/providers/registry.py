@@ -12,6 +12,7 @@ from boekhouder.config import get_settings
 from boekhouder.providers.bank_import import FileBankImporter
 from boekhouder.providers.base import BankImporter, BookkeepingProvider, OcrProvider
 from boekhouder.providers.moneybird import MoneybirdProvider
+from boekhouder.providers.obsidian import ObsidianVault
 from boekhouder.providers.ocr_tesseract import StubOcr, TesseractOcr
 
 
@@ -37,3 +38,8 @@ def get_bank_importer() -> BankImporter:
 @lru_cache
 def get_bookkeeping() -> BookkeepingProvider:
     return MoneybirdProvider()
+
+
+@lru_cache
+def get_obsidian() -> ObsidianVault:
+    return ObsidianVault()
