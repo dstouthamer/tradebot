@@ -26,6 +26,7 @@ advies geeft — en de belastingdruk zo laag mogelijk houdt **binnen de wet**.
 | Learning rules met versiebeheer + bron | ✅ |
 | Telegram-bot intake (tekst + foto) | ✅ met token |
 | Moneybird concept-facturen + banktransacties | ✅ met token (anders dry-run) |
+| **Obsidian-export** (boekhouding als Markdown-notities in je vault) | ✅ keyless, lokaal |
 | FastAPI backend + Streamlit dashboard + CLI | ✅ runnable |
 | Hosten op een VPS (bv. mijn.host) met Docker + automatische HTTPS | ✅ zie deploy/ |
 | LLM-reasoning via Claude (claude-opus-4-8) | 🧩 seam, aan met API-key |
@@ -55,6 +56,7 @@ Voorbeelden in de CLI:
 Maak factuur voor De Vries airco montage 1850 ex btw
 Maak offerte hybride warmtepomp Apeldoorn 6500 incl btw
 /bank tests/fixtures/sample_ing.csv
+/obsidian                                   # exporteer naar je Obsidian-vault
 Bonnetje Gamma project Jansen 124,80 12-06-2026
 Hoeveel btw moet ik betalen dit kwartaal?
 Boek deze prive aankoop als zakelijk        # -> wordt geblokkeerd (rood)
@@ -69,6 +71,7 @@ Kopieer `.env.example` naar `.env` en vul in wat je wilt gebruiken — alles is 
 BOEKHOUDER_TELEGRAM_TOKEN=...     # python -m boekhouder.worker  (long-poll bot)
 BOEKHOUDER_MONEYBIRD_TOKEN=...    # concept-facturen in Moneybird
 BOEKHOUDER_MONEYBIRD_ADMIN_ID=...
+BOEKHOUDER_OBSIDIAN_VAULT=...     # exporteer je boekhouding als Markdown-notities
 BOEKHOUDER_ANTHROPIC_API_KEY=...  # LLM-reasoning seam (claude-opus-4-8)
 BOEKHOUDER_ALLOW_AUTO_SEND=false  # laat op false tot je echt wilt versturen
 ```
@@ -79,16 +82,16 @@ BOEKHOUDER_ALLOW_AUTO_SEND=false  # laat op false tot je echt wilt versturen
 chat / API / Telegram
         │
    ┌────▼─────┐  compliance pre-check (blokkeert fraude)
-   │  Router  │──────────────────────────────────────────────┐
+   │  Router  │──────────────────────────────────────┐
    └────┬─────┘                                               │
         │ Intake bepaalt intentie                             │
         ▼                                                     ▼
-  ┌───────────────────────────── agents ─────────────────────────────┐
+  ┌──────────────────────────── agents ─────────────────────┐
   │ OCR · Bank-matching · Boekhoud · Factuur · Offerte · Fiscaal · CFO │
   │ Learning · Compliance        (allemaal -> AgentResult groen/oranje/rood)
-  └───────────────────────────────────────────────────────────────────┘
+  └───────────────────────────────────────────────┘
         │                                  │
-   approval gate (geen actie zonder 'ja')  providers (OCR/bank/Moneybird/Telegram/LLM)
+   approval gate (geen actie zonder 'ja')  providers (OCR/bank/Moneybird/Telegram/Obsidian/LLM)
         │                                  │
    audit log + controlelijst        keyless fallback per provider
 ```
